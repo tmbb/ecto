@@ -1,0 +1,1007 @@
+    <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.17.1">
+    <title>Ecto.Type – Ecto v3.0.0-dev</title>
+    <link rel="stylesheet" href="dist/app-110d9134a6.css" />
+    
+      <link rel="canonical" href="http://hexdocs.pm/ecto/Ecto.Type.html" />
+    
+    
+      
+        <link rel="icon" type="image/png" href="assets/logo.png" />
+      
+      
+    
+    <script src="dist/sidebar_items-d4f8a3d044.js"></script>
+    <link rel="stylesheet" href="assets/makedown.css"/>
+  </head>
+  <body data-type="modules">
+    <script>try { if(localStorage.getItem('night-mode')) document.body.className += ' night-mode'; } catch (e) { }</script>
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <span class="icon-menu" aria-hidden="true"></span>
+  <span class="sr-only">Toggle Sidebar</span>
+</button>
+<section class="sidebar">
+
+  
+  <a href="Ecto.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        Ecto
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v3.0.0-dev
+      </h2>
+    </div>
+    
+      <img src="assets/logo.png" alt="Ecto" class="sidebar-projectImage">
+    
+  </a>
+
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button">
+      <span class="icon-search" aria-hidden="true"></span>
+    </button>
+    <input name="q" type="text" id="search-list" class="search-input" placeholder="search" aria-label="Search" autocomplete="off" />
+  </form>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+      <li><a id="exceptions-list" href="#full-list">Exceptions</a></li>
+    
+
+    
+      <li><a id="tasks-list" href="#full-list">Mix Tasks</a></li>
+    
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">Ecto v3.0.0-dev</small>
+        Ecto.Type <small>behaviour</small>
+        
+          <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L1" title="View Source" class="view-source" rel="help">
+            <span class="icon-code" aria-hidden="true"></span>
+            <span class="sr-only">View Source</span>
+          </a>
+        
+      </h1>
+
+      
+        <section id="moduledoc">
+          <p>Defines functions and the <a href="Ecto.Type.html#content"><code class="inline">Ecto.Type</code></a> behaviour for implementing
+custom types.</p>
+<p>A custom type expects 4 functions to be implemented, all documented
+and described below. We also provide two examples of how custom
+types can be used in Ecto to augment existing types or providing
+your own types.</p>
+<h2 id="module-example" class="section-heading">
+  <a href="#module-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Example
+</h2>
+
+<p>Imagine you want to store an URI struct as part of a schema in an 
+url-shortening service. There isn’t an Ecto field type to support 
+that value at runtime, therefore a custom one is needed.</p>
+<p>You also want to query not only by the full url, but for example 
+by specific ports used. This is possible by putting the URI data
+into a map field instead of just storing the plain 
+string representation.</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">ShortUrl</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">fragment</span><span class="p" data-group-id="2230">(</span><span class="s2">&quot;?-&gt;&gt;? ILIKE ?&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="o">.</span><span class="n">original_url</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;443&quot;</span><span class="p" data-group-id="2230">)</span></code></pre>
+<p>So the custom type does need to handle the conversion from 
+external data to runtime data (<a href="#c:cast/1"><code class="inline">cast/1</code></a>) as well as 
+transforming that runtime data into the <code class="inline">:map</code> Ecto native type and 
+back (<a href="#c:dump/1"><code class="inline">dump/1</code></a> and <a href="#c:load/1"><code class="inline">load/1</code></a>).</p>
+<pre><code class="nohighlight makeup"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">EctoURI</span><span class="w"> </span><span class="k" data-group-id="2619">do</span><span class="w">
+  </span><span class="na">@behaviour</span><span class="w"> </span><span class="nc">Ecto.Type</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">type</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="ss">:map</span><span class="w">
+
+  </span><span class="c1"># Provide custom casting rules.
+</span><span class="w">  </span><span class="c1"># Cast strings into the URI struct to be used at runtime
+</span><span class="w">  </span><span class="kd">def</span><span class="w"> </span><span class="nf">cast</span><span class="p" data-group-id="2214">(</span><span class="n">uri</span><span class="p" data-group-id="2214">)</span><span class="w"> </span><span class="ow">when</span><span class="w"> </span><span class="n">is_binary</span><span class="p" data-group-id="2218">(</span><span class="n">uri</span><span class="p" data-group-id="2218">)</span><span class="w"> </span><span class="k" data-group-id="2263">do</span><span class="w">
+    </span><span class="p" data-group-id="2250">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="nc">URI</span><span class="o">.</span><span class="n">parse</span><span class="p" data-group-id="2249">(</span><span class="n">uri</span><span class="p" data-group-id="2249">)</span><span class="p" data-group-id="2250">}</span><span class="w">
+  </span><span class="k" data-group-id="2263">end</span><span class="w">
+
+  </span><span class="c1"># Accept casting of URI structs as well
+</span><span class="w">  </span><span class="kd">def</span><span class="w"> </span><span class="nf">cast</span><span class="p" data-group-id="2287">(</span><span class="p" data-group-id="2279">%</span><span class="nc" data-group-id="2279">URI</span><span class="p" data-group-id="2279">{}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uri</span><span class="p" data-group-id="2287">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2318">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">uri</span><span class="p" data-group-id="2318">}</span><span class="w">
+
+  </span><span class="c1"># Everything else is a failure though
+</span><span class="w">  </span><span class="kd">def</span><span class="w"> </span><span class="nf">cast</span><span class="p" data-group-id="2367">(</span><span class="bp">_</span><span class="p" data-group-id="2367">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="ss">:error</span><span class="w">
+
+  </span><span class="c1"># When loading data from the database, we are guaranteed to
+</span><span class="w">  </span><span class="c1"># receive a map (as databases are strict) and we will
+</span><span class="w">  </span><span class="c1"># just put the data back into an URI struct to be stored 
+</span><span class="w">  </span><span class="c1"># in the loaded schema struct.
+</span><span class="w">  </span><span class="kd">def</span><span class="w"> </span><span class="nf">load</span><span class="p" data-group-id="2463">(</span><span class="n">data</span><span class="p" data-group-id="2463">)</span><span class="w"> </span><span class="ow">when</span><span class="w"> </span><span class="n">is_map</span><span class="p" data-group-id="2487">(</span><span class="n">data</span><span class="p" data-group-id="2487">)</span><span class="w"> </span><span class="k" data-group-id="2579">do</span><span class="w">
+    </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> 
+      </span><span class="k">for</span><span class="w"> </span><span class="p" data-group-id="2517">{</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">val</span><span class="p" data-group-id="2517">}</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="k" data-group-id="2562">do</span><span class="w">
+        </span><span class="p" data-group-id="2559">{</span><span class="nc">String</span><span class="o">.</span><span class="n">to_existing_atom</span><span class="p" data-group-id="2551">(</span><span class="n">key</span><span class="p" data-group-id="2551">)</span><span class="p">,</span><span class="w"> </span><span class="n">val</span><span class="p" data-group-id="2559">}</span><span class="w">
+      </span><span class="k" data-group-id="2562">end</span><span class="w">
+    </span><span class="p" data-group-id="2578">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">struct!</span><span class="p" data-group-id="2577">(</span><span class="nc">URI</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p" data-group-id="2577">)</span><span class="p" data-group-id="2578">}</span><span class="w">
+  </span><span class="k" data-group-id="2579">end</span><span class="w">
+
+  </span><span class="c1"># When dumping data to the database, we *expect* an URI struct
+</span><span class="w">  </span><span class="c1"># but any value could be inserted into the schema struct at runtime,
+</span><span class="w">  </span><span class="c1"># so we need to guard against them.
+</span><span class="w">  </span><span class="kd">def</span><span class="w"> </span><span class="nf">dump</span><span class="p" data-group-id="2602">(</span><span class="p" data-group-id="2600">%</span><span class="nc" data-group-id="2600">URI</span><span class="p" data-group-id="2600">{}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uri</span><span class="p" data-group-id="2602">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2613">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="nc">Map</span><span class="o">.</span><span class="n">from_struct</span><span class="p" data-group-id="2612">(</span><span class="n">uri</span><span class="p" data-group-id="2612">)</span><span class="p" data-group-id="2613">}</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">dump</span><span class="p" data-group-id="2616">(</span><span class="bp">_</span><span class="p" data-group-id="2616">)</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="ss">:error</span><span class="w">
+</span><span class="k" data-group-id="2619">end</span></code></pre>
+<p>Now we can use our new field type above in our schemas:</p>
+<pre><code class="nohighlight makeup"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">ShortUrl</span><span class="w"> </span><span class="k" data-group-id="2210">do</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Ecto.Schema</span><span class="w">
+
+  </span><span class="n">schema</span><span class="w"> </span><span class="s2">&quot;posts&quot;</span><span class="w"> </span><span class="k" data-group-id="2208">do</span><span class="w">
+    </span><span class="n">field</span><span class="w"> </span><span class="ss">:original_url</span><span class="p">,</span><span class="w"> </span><span class="nc">EctoURI</span><span class="w">
+  </span><span class="k" data-group-id="2208">end</span><span class="w">
+</span><span class="k" data-group-id="2210">end</span></code></pre>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Summary
+          </h1>
+          
+  <div class="summary-types summary">
+    <h2>
+      <a href="#types">Types</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:custom/0">custom()</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Custom types are represented by user-defined modules</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:primitive/0">primitive()</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Primitive Ecto types (handled by Ecto)</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:t/0">t()</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An Ecto type, primitive or custom</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#base?/1">base?(atom)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Checks if the given atom can be used as base type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#cast/2">cast(type, value)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Casts a value to the given type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#composite?/1">composite?(atom)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Checks if the given atom can be used as composite type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#dump/3">dump(type, value, dumper \\ &amp;dump/2)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Dumps a value to the given type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#load/3">load(type, value, loader \\ &amp;load/2)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Loads a value with the given type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#match?/2">match?(schema_type, query_type)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Checks if a given type matches with a primitive type
+that can be found in queries</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#primitive?/1">primitive?(base)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Checks if we have a primitive type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#type/1">type(type)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Retrieves the underlying schema type for the given, possibly custom, type</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+  <div class="summary-callbacks summary">
+    <h2>
+      <a href="#callbacks">Callbacks</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#c:cast/1">cast(term)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Casts the given input to the custom type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#c:dump/1">dump(term)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Dumps the given term into an Ecto native type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#c:load/1">load(term)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Loads the given term into a custom type</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#c:type/0">type()</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Returns the underlying schema type for the custom type</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+        </section>
+      
+
+      
+        <section id="types" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#types">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Types
+          </h1>
+          <div class="types-list">
+            <div class="detail" id="t:custom/0">
+  
+  
+  <div class="detail-header">
+    <a href="#t:custom/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <span class="signature">custom()</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L86" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>custom() :: atom</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Custom types are represented by user-defined modules.</p>
+
+  </section>
+</div>
+<div class="detail" id="t:primitive/0">
+  
+  
+  <div class="detail-header">
+    <a href="#t:primitive/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <span class="signature">primitive()</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L83" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>primitive() :: base | composite</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Primitive Ecto types (handled by Ecto).</p>
+
+  </section>
+</div>
+<div class="detail" id="t:t/0">
+  
+  
+  <div class="detail-header">
+    <a href="#t:t/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <span class="signature">t()</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L80" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>t() :: <a href="#t:primitive/0">primitive</a> | <a href="#t:custom/0">custom</a></pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>An Ecto type, primitive or custom.</p>
+
+  </section>
+</div>
+
+          </div>
+        </section>
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="base?/1">
+  
+  
+  <div class="detail-header">
+    <a href="#base?/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">base?(atom)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L184" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>base?(atom) :: boolean</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Checks if the given atom can be used as base type.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">base?</span><span class="p" data-group-id="2677">(</span><span class="ss">:string</span><span class="p" data-group-id="2677">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">base?</span><span class="p" data-group-id="2682">(</span><span class="ss">:array</span><span class="p" data-group-id="2682">)</span><span class="w">
+</span><span class="no">false</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">base?</span><span class="p" data-group-id="2685">(</span><span class="nc">Custom</span><span class="p" data-group-id="2685">)</span><span class="w">
+</span><span class="no">false</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="cast/2">
+  
+  
+  <div class="detail-header">
+    <a href="#cast/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">cast(type, value)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L618" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>cast(<a href="#t:t/0">t</a>, term) :: {:ok, term} | :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Casts a value to the given type.</p>
+<p><a href="#cast/2"><code class="inline">cast/2</code></a> is used by the finder queries and changesets
+to cast outside values to specific types.</p>
+<p>Note that nil can be cast to all primitive types as data
+stores allow nil to be set on any column.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2700">(</span><span class="ss">:any</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;whatever&quot;</span><span class="p" data-group-id="2700">)</span><span class="w">
+</span><span class="p" data-group-id="2713">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;whatever&quot;</span><span class="p" data-group-id="2713">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2718">(</span><span class="ss">:any</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="2718">)</span><span class="w">
+</span><span class="p" data-group-id="2726">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="2726">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2734">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="2734">)</span><span class="w">
+</span><span class="p" data-group-id="2745">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="2745">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2754">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2754">)</span><span class="w">
+</span><span class="p" data-group-id="2755">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2755">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2770">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p" data-group-id="2770">)</span><span class="w">
+</span><span class="p" data-group-id="2781">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2781">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2793">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p" data-group-id="2793">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2801">(</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2801">)</span><span class="w">
+</span><span class="p" data-group-id="2806">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2806">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2812">(</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p" data-group-id="2812">)</span><span class="w">
+</span><span class="p" data-group-id="2815">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2815">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2820">(</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p" data-group-id="2820">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2827">(</span><span class="ss">:float</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p" data-group-id="2827">)</span><span class="w">
+</span><span class="p" data-group-id="2836">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p" data-group-id="2836">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2839">(</span><span class="ss">:float</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="2839">)</span><span class="w">
+</span><span class="p" data-group-id="2850">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p" data-group-id="2850">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2858">(</span><span class="ss">:float</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p" data-group-id="2858">)</span><span class="w">
+</span><span class="p" data-group-id="2863">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p" data-group-id="2863">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2871">(</span><span class="ss">:float</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p" data-group-id="2871">)</span><span class="w">
+</span><span class="p" data-group-id="2874">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p" data-group-id="2874">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2879">(</span><span class="ss">:float</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1-foo&quot;</span><span class="p" data-group-id="2879">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2885">(</span><span class="ss">:boolean</span><span class="p">,</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="2885">)</span><span class="w">
+</span><span class="p" data-group-id="2893">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="2893">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2901">(</span><span class="ss">:boolean</span><span class="p">,</span><span class="w"> </span><span class="no">false</span><span class="p" data-group-id="2901">)</span><span class="w">
+</span><span class="p" data-group-id="2912">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">false</span><span class="p" data-group-id="2912">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2930">(</span><span class="ss">:boolean</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1&quot;</span><span class="p" data-group-id="2930">)</span><span class="w">
+</span><span class="p" data-group-id="2937">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="2937">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2940">(</span><span class="ss">:boolean</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;0&quot;</span><span class="p" data-group-id="2940">)</span><span class="w">
+</span><span class="p" data-group-id="2945">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">false</span><span class="p" data-group-id="2945">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2958">(</span><span class="ss">:boolean</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;whatever&quot;</span><span class="p" data-group-id="2958">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2971">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;beef&quot;</span><span class="p" data-group-id="2971">)</span><span class="w">
+</span><span class="p" data-group-id="2978">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;beef&quot;</span><span class="p" data-group-id="2978">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="2996">(</span><span class="ss">:binary</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;beef&quot;</span><span class="p" data-group-id="2996">)</span><span class="w">
+</span><span class="p" data-group-id="3004">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;beef&quot;</span><span class="p" data-group-id="3004">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3015">(</span><span class="ss">:decimal</span><span class="p">,</span><span class="w"> </span><span class="nc">Decimal</span><span class="o">.</span><span class="n">new</span><span class="p" data-group-id="3014">(</span><span class="mf">1.0</span><span class="p" data-group-id="3014">)</span><span class="p" data-group-id="3015">)</span><span class="w">
+</span><span class="p" data-group-id="3031">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="nc">Decimal</span><span class="o">.</span><span class="n">new</span><span class="p" data-group-id="3028">(</span><span class="mf">1.0</span><span class="p" data-group-id="3028">)</span><span class="p" data-group-id="3031">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3040">(</span><span class="ss">:decimal</span><span class="p">,</span><span class="w"> </span><span class="nc">Decimal</span><span class="o">.</span><span class="n">new</span><span class="p" data-group-id="3039">(</span><span class="s2">&quot;1.0&quot;</span><span class="p" data-group-id="3039">)</span><span class="p" data-group-id="3040">)</span><span class="w">
+</span><span class="p" data-group-id="3048">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="nc">Decimal</span><span class="o">.</span><span class="n">new</span><span class="p" data-group-id="3047">(</span><span class="mf">1.0</span><span class="p" data-group-id="3047">)</span><span class="p" data-group-id="3048">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3082">(</span><span class="p" data-group-id="3064">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:integer</span><span class="p" data-group-id="3064">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3081">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3081">]</span><span class="p" data-group-id="3082">)</span><span class="w">
+</span><span class="p" data-group-id="3125">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3124">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3124">]</span><span class="p" data-group-id="3125">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3157">(</span><span class="p" data-group-id="3132">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:integer</span><span class="p" data-group-id="3132">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3156">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p" data-group-id="3156">]</span><span class="p" data-group-id="3157">)</span><span class="w">
+</span><span class="p" data-group-id="3175">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3174">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3174">]</span><span class="p" data-group-id="3175">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3190">(</span><span class="p" data-group-id="3180">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3180">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3189">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3189">]</span><span class="p" data-group-id="3190">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">cast</span><span class="p" data-group-id="3199">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3198">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3198">]</span><span class="p" data-group-id="3199">)</span><span class="w">
+</span><span class="ss">:error</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="composite?/1">
+  
+  
+  <div class="detail-header">
+    <a href="#composite?/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">composite?(atom)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L170" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>composite?(atom) :: boolean</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Checks if the given atom can be used as composite type.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">composite?</span><span class="p" data-group-id="3228">(</span><span class="ss">:array</span><span class="p" data-group-id="3228">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">composite?</span><span class="p" data-group-id="3231">(</span><span class="ss">:string</span><span class="p" data-group-id="3231">)</span><span class="w">
+</span><span class="no">false</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="dump/3">
+  
+  
+    <span id="dump/2"></span>
+  
+  <div class="detail-header">
+    <a href="#dump/3" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">dump(type, value, dumper \\ &amp;dump/2)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L342" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>dump(<a href="#t:t/0">t</a>, term, (<a href="#t:t/0">t</a>, term -> {:ok, term} | :error)) ::
+  {:ok, term} |
+  :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Dumps a value to the given type.</p>
+<p>Opposite to casting, dumping requires the returned value
+to be a valid Ecto type, as it will be sent to the
+underlying data store.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3244">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="3244">)</span><span class="w">
+</span><span class="p" data-group-id="3248">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="3248">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3253">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3253">)</span><span class="w">
+</span><span class="p" data-group-id="3259">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3259">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3265">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3265">)</span><span class="w">
+</span><span class="p" data-group-id="3277">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3277">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3290">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;10&quot;</span><span class="p" data-group-id="3290">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3299">(</span><span class="ss">:binary</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3299">)</span><span class="w">
+</span><span class="p" data-group-id="3303">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3303">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3316">(</span><span class="ss">:binary</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3316">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3338">(</span><span class="p" data-group-id="3323">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:integer</span><span class="p" data-group-id="3323">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3337">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3337">]</span><span class="p" data-group-id="3338">)</span><span class="w">
+</span><span class="p" data-group-id="3353">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3352">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3352">]</span><span class="p" data-group-id="3353">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3369">(</span><span class="p" data-group-id="3356">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:integer</span><span class="p" data-group-id="3356">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3368">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p" data-group-id="3368">]</span><span class="p" data-group-id="3369">)</span><span class="w">
+</span><span class="ss">:error</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">dump</span><span class="p" data-group-id="3382">(</span><span class="p" data-group-id="3370">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:binary</span><span class="p" data-group-id="3370">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3381">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p" data-group-id="3381">]</span><span class="p" data-group-id="3382">)</span><span class="w">
+</span><span class="p" data-group-id="3400">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3399">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p" data-group-id="3399">]</span><span class="p" data-group-id="3400">}</span></code></pre>
+<p>A <code class="inline">dumper</code> function may be given for handling recursive types.</p>
+
+  </section>
+</div>
+<div class="detail" id="load/3">
+  
+  
+    <span id="load/2"></span>
+  
+  <div class="detail-header">
+    <a href="#load/3" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">load(type, value, loader \\ &amp;load/2)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L434" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>load(<a href="#t:t/0">t</a>, term, (<a href="#t:t/0">t</a>, term -> {:ok, term} | :error)) ::
+  {:ok, term} |
+  :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Loads a value with the given type.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">load</span><span class="p" data-group-id="3416">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="3416">)</span><span class="w">
+</span><span class="p" data-group-id="3420">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="no">nil</span><span class="p" data-group-id="3420">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">load</span><span class="p" data-group-id="3423">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3423">)</span><span class="w">
+</span><span class="p" data-group-id="3424">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="3424">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">load</span><span class="p" data-group-id="3430">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3430">)</span><span class="w">
+</span><span class="p" data-group-id="3434">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3434">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">load</span><span class="p" data-group-id="3438">(</span><span class="ss">:integer</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;10&quot;</span><span class="p" data-group-id="3438">)</span><span class="w">
+</span><span class="ss">:error</span></code></pre>
+<p>A <code class="inline">loader</code> function may be given for handling recursive types.</p>
+
+  </section>
+</div>
+<div class="detail" id="match?/2">
+  
+  
+  <div class="detail-header">
+    <a href="#match?/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">match?(schema_type, query_type)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L239" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>match?(<a href="#t:t/0">t</a>, <a href="#t:primitive/0">primitive</a>) :: boolean</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Checks if a given type matches with a primitive type
+that can be found in queries.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3446">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="ss">:any</span><span class="p" data-group-id="3446">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3447">(</span><span class="ss">:any</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3447">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3448">(</span><span class="ss">:string</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3448">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3455">(</span><span class="p" data-group-id="3451">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3451">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3454">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:any</span><span class="p" data-group-id="3454">}</span><span class="p" data-group-id="3455">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3457">(</span><span class="nc">Ecto.UUID</span><span class="p">,</span><span class="w"> </span><span class="ss">:uuid</span><span class="p" data-group-id="3457">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">match?</span><span class="p" data-group-id="3462">(</span><span class="nc">Ecto.UUID</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3462">)</span><span class="w">
+</span><span class="no">false</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="primitive?/1">
+  
+  
+  <div class="detail-header">
+    <a href="#primitive?/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">primitive?(base)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L158" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>primitive?(<a href="#t:t/0">t</a>) :: boolean</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Checks if we have a primitive type.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">primitive?</span><span class="p" data-group-id="3465">(</span><span class="ss">:string</span><span class="p" data-group-id="3465">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">primitive?</span><span class="p" data-group-id="3468">(</span><span class="nc">Another</span><span class="p" data-group-id="3468">)</span><span class="w">
+</span><span class="no">false</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">primitive?</span><span class="p" data-group-id="3470">(</span><span class="p" data-group-id="3469">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3469">}</span><span class="p" data-group-id="3470">)</span><span class="w">
+</span><span class="no">true</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">primitive?</span><span class="p" data-group-id="3482">(</span><span class="p" data-group-id="3481">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="nc">Another</span><span class="p" data-group-id="3481">}</span><span class="p" data-group-id="3482">)</span><span class="w">
+</span><span class="no">true</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="type/1">
+  
+  
+  <div class="detail-header">
+    <a href="#type/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">type(type)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L210" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>type(<a href="#t:t/0">t</a>) :: <a href="#t:t/0">t</a></pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Retrieves the underlying schema type for the given, possibly custom, type.</p>
+<pre><code class="nohighlight makeup"><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="3489">(</span><span class="ss">:string</span><span class="p" data-group-id="3489">)</span><span class="w">
+</span><span class="ss">:string</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="3495">(</span><span class="nc">Ecto.UUID</span><span class="p" data-group-id="3495">)</span><span class="w">
+</span><span class="ss">:uuid</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="3503">(</span><span class="p" data-group-id="3502">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3502">}</span><span class="p" data-group-id="3503">)</span><span class="w">
+</span><span class="p" data-group-id="3505">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:string</span><span class="p" data-group-id="3505">}</span><span class="w">
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="3509">(</span><span class="p" data-group-id="3508">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="nc">Ecto.UUID</span><span class="p" data-group-id="3508">}</span><span class="p" data-group-id="3509">)</span><span class="w">
+</span><span class="p" data-group-id="3516">{</span><span class="ss">:array</span><span class="p">,</span><span class="w"> </span><span class="ss">:uuid</span><span class="p" data-group-id="3516">}</span><span class="w">
+
+</span><span class="gp">iex&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="3523">(</span><span class="p" data-group-id="3522">{</span><span class="ss">:map</span><span class="p">,</span><span class="w"> </span><span class="nc">Ecto.UUID</span><span class="p" data-group-id="3522">}</span><span class="p" data-group-id="3523">)</span><span class="w">
+</span><span class="p" data-group-id="3526">{</span><span class="ss">:map</span><span class="p">,</span><span class="w"> </span><span class="ss">:uuid</span><span class="p" data-group-id="3526">}</span></code></pre>
+
+  </section>
+</div>
+
+        </section>
+      
+
+      
+        <section id="callbacks" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#callbacks">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Callbacks
+          </h1>
+          <div class="detail" id="c:cast/1">
+  
+  
+  <div class="detail-header">
+    <a href="#c:cast/1" class="detail-link" title="Link to this callback">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <span class="signature">cast(term)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L119" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>cast(term) :: {:ok, term} | :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Casts the given input to the custom type.</p>
+<p>This callback is called on external input and can return any type,
+as long as the <code class="inline">dump/1</code> function is able to convert the returned
+value into an Ecto native type. There are two situations where
+this callback is called:</p>
+<ol>
+<li>When casting values by <a href="Ecto.Changeset.html"><code class="inline">Ecto.Changeset</code></a>
+</li>
+<li>When passing arguments to <a href="Ecto.Query.html"><code class="inline">Ecto.Query</code></a>
+</li>
+</ol>
+
+  </section>
+</div>
+<div class="detail" id="c:dump/1">
+  
+  
+  <div class="detail-header">
+    <a href="#c:dump/1" class="detail-link" title="Link to this callback">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <span class="signature">dump(term)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L137" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>dump(term) :: {:ok, term} | :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Dumps the given term into an Ecto native type.</p>
+<p>This callback is called with any term that was stored in the struct
+and it needs to validate them and convert it to an Ecto native type.</p>
+
+  </section>
+</div>
+<div class="detail" id="c:load/1">
+  
+  
+  <div class="detail-header">
+    <a href="#c:load/1" class="detail-link" title="Link to this callback">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <span class="signature">load(term)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L129" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>load(term) :: {:ok, term} | :error</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Loads the given term into a custom type.</p>
+<p>This callback is called when loading data from the database and
+receive an Ecto native type. It can return any type, as long as
+the <code class="inline">dump/1</code> function is able to convert the returned value back
+into an Ecto native type.</p>
+
+  </section>
+</div>
+<div class="detail" id="c:type/0">
+  
+  
+  <div class="detail-header">
+    <a href="#c:type/0" class="detail-link" title="Link to this callback">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <span class="signature">type()</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/type.ex#L105" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>type() :: <a href="#t:t/0">t</a></pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    <p>Returns the underlying schema type for the custom type.</p>
+<p>For example, if you want to provide your own date
+structures, the type function should return <code class="inline">:date</code>.</p>
+<p>Note this function is not required to return Ecto primitive
+types, the type is only required to be known by the adapter.</p>
+
+  </section>
+</div>
+
+        </section>
+      
+          <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.17.1),
+          </span>
+          <span class="line">
+            designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+            </span>
+        </p>
+        <button class="night-mode-toggle"><span class="sr-only">Switch theme</span></button>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+  <script src="dist/app-4cfb39be16.js"></script>
+  <script src="assets/makedown.js"></script>
+  </body>
+</html>
+

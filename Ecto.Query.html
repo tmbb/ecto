@@ -1,0 +1,1900 @@
+    <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.17.1">
+    <title>Ecto.Query – Ecto v3.0.0-dev</title>
+    <link rel="stylesheet" href="dist/app-110d9134a6.css" />
+    
+      <link rel="canonical" href="http://hexdocs.pm/ecto/Ecto.Query.html" />
+    
+    
+      
+        <link rel="icon" type="image/png" href="assets/logo.png" />
+      
+      
+    
+    <script src="dist/sidebar_items-d4f8a3d044.js"></script>
+    <link rel="stylesheet" href="assets/makedown.css"/>
+  </head>
+  <body data-type="modules">
+    <script>try { if(localStorage.getItem('night-mode')) document.body.className += ' night-mode'; } catch (e) { }</script>
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <span class="icon-menu" aria-hidden="true"></span>
+  <span class="sr-only">Toggle Sidebar</span>
+</button>
+<section class="sidebar">
+
+  
+  <a href="Ecto.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        Ecto
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v3.0.0-dev
+      </h2>
+    </div>
+    
+      <img src="assets/logo.png" alt="Ecto" class="sidebar-projectImage">
+    
+  </a>
+
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button">
+      <span class="icon-search" aria-hidden="true"></span>
+    </button>
+    <input name="q" type="text" id="search-list" class="search-input" placeholder="search" aria-label="Search" autocomplete="off" />
+  </form>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+      <li><a id="exceptions-list" href="#full-list">Exceptions</a></li>
+    
+
+    
+      <li><a id="tasks-list" href="#full-list">Mix Tasks</a></li>
+    
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">Ecto v3.0.0-dev</small>
+        Ecto.Query
+        
+          <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L8" title="View Source" class="view-source" rel="help">
+            <span class="icon-code" aria-hidden="true"></span>
+            <span class="sr-only">View Source</span>
+          </a>
+        
+      </h1>
+
+      
+        <section id="moduledoc">
+          <p>Provides the Query DSL.</p>
+<p>Queries are used to retrieve and manipulate data from a repository
+(see <a href="Ecto.Repo.html"><code class="inline">Ecto.Repo</code></a>). Ecto queries come in two flavors: keyword-based
+and macro-based. Most examples will use the keyword-based syntax,
+the macro one will be explored in later sections.</p>
+<p>Let’s see a sample query:</p>
+<pre><code class="nohighlight makeup"><span class="c1"># Imports only from/2 of Ecto.Query
+</span><span class="kn">import</span><span class="w"> </span><span class="nc">Ecto.Query</span><span class="p">,</span><span class="w"> </span><span class="ss">only</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2259">[</span><span class="ss">from</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p" data-group-id="2259">]</span><span class="w">
+
+</span><span class="c1"># Create a query
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="s2">&quot;users&quot;</span><span class="p">,</span><span class="w">
+          </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w">
+          </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span><span class="w">
+
+</span><span class="c1"># Send the query to the repository
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="p" data-group-id="2454">(</span><span class="n">query</span><span class="p" data-group-id="2454">)</span></code></pre>
+<p>In the example above, we are directly querying the “users” table
+from the database.</p>
+<h2 id="module-query-expressions" class="section-heading">
+  <a href="#module-query-expressions" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Query expressions
+</h2>
+
+<p>Ecto allows a limited set of expressions inside queries. In the
+query below, for example, we use <code class="inline">u.age</code> to access a field, the
+<code class="inline">&gt;</code> comparison operator and the literal <code class="inline">0</code>:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="s2">&quot;users&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span></code></pre>
+<p>You can find the full list of operations in <a href="Ecto.Query.API.html"><code class="inline">Ecto.Query.API</code></a>.
+Besides the operations listed there, the following literals are
+supported in queries:</p>
+<ul>
+<li>Integers: <code class="inline">1</code>, <code class="inline">2</code>, <code class="inline">3</code>
+</li>
+<li>Floats: <code class="inline">1.0</code>, <code class="inline">2.0</code>, <code class="inline">3.0</code>
+</li>
+<li>Booleans: <code class="inline">true</code>, <code class="inline">false</code>
+</li>
+<li>Binaries: <code class="inline">&lt;&lt;1, 2, 3&gt;&gt;</code>
+</li>
+<li>Strings: <code class="inline">&quot;foo bar&quot;</code>, <code class="inline">~s(this is a string)</code>
+</li>
+<li>Arrays: <code class="inline">[1, 2, 3]</code>, <code class="inline">~w(interpolate words)</code>
+</li>
+</ul>
+<p>All other types and dynamic values must be passed as a parameter using
+interpolation as explained below.</p>
+<h2 id="module-interpolation-and-casting" class="section-heading">
+  <a href="#module-interpolation-and-casting" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Interpolation and casting
+</h2>
+
+<p>External values and Elixir expressions can be injected into a query
+expression with <code class="inline">^</code>:</p>
+<pre><code class="nohighlight makeup"><span class="kd">def</span><span class="w"> </span><span class="nf">with_minimum</span><span class="p" data-group-id="2240">(</span><span class="n">age</span><span class="p">,</span><span class="w"> </span><span class="n">height_ft</span><span class="p" data-group-id="2240">)</span><span class="w"> </span><span class="k" data-group-id="2481">do</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="s2">&quot;users&quot;</span><span class="p">,</span><span class="w">
+    </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">^</span><span class="n">age</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">height</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">^</span><span class="p" data-group-id="2436">(</span><span class="n">height_ft</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">3.28</span><span class="p" data-group-id="2436">)</span><span class="p">,</span><span class="w">
+    </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span><span class="w">
+</span><span class="k" data-group-id="2481">end</span><span class="w">
+
+</span><span class="n">with_minimum</span><span class="p" data-group-id="2510">(</span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p" data-group-id="2510">)</span></code></pre>
+<p>When interpolating values, you may want to explicitly tell Ecto
+what is the expected type of the value being interpolated:</p>
+<pre><code class="nohighlight makeup"><span class="n">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;18&quot;</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="p" data-group-id="2439">(</span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="s2">&quot;users&quot;</span><span class="p">,</span><span class="w">
+          </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">type</span><span class="p" data-group-id="2412">(</span><span class="o">^</span><span class="n">age</span><span class="p">,</span><span class="w"> </span><span class="ss">:integer</span><span class="p" data-group-id="2412">)</span><span class="p">,</span><span class="w">
+          </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="2439">)</span></code></pre>
+<p>In the example above, Ecto will cast the age to type integer. When
+a value cannot be cast, <a href="Ecto.Query.CastError.html"><code class="inline">Ecto.Query.CastError</code></a> is raised.</p>
+<p>To avoid the repetition of always specifying the types, you may define
+an <a href="Ecto.Schema.html"><code class="inline">Ecto.Schema</code></a>. In such cases, Ecto will analyze your queries and
+automatically cast the interpolated “age” when compared to the <code class="inline">u.age</code>
+field, as long as the age field is defined with type <code class="inline">:integer</code> in
+your schema:</p>
+<pre><code class="nohighlight makeup"><span class="n">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;18&quot;</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="p" data-group-id="2372">(</span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">^</span><span class="n">age</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="2372">)</span></code></pre>
+<p>Another advantage of using schemas is that we no longer need to specify
+the select option in queries, as by default Ecto will retrieve all
+fields specified in the schema:</p>
+<pre><code class="nohighlight makeup"><span class="n">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;18&quot;</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="p" data-group-id="2340">(</span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">^</span><span class="n">age</span><span class="p" data-group-id="2340">)</span></code></pre>
+<p>For this reason, we will use schemas on the remaining examples but
+remember Ecto does not require them in order to write queries.</p>
+<h2 id="module-composition" class="section-heading">
+  <a href="#module-composition" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Composition
+</h2>
+
+<p>Ecto queries are composable. For example, the query above can
+actually be defined in two parts:</p>
+<pre><code class="nohighlight makeup"><span class="c1"># Create a query
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span><span class="w">
+
+</span><span class="c1"># Extend the query
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span></code></pre>
+<p>Composing queries uses the same syntax as creating a query.
+The difference is that, instead of passing a schema like <code class="inline">User</code>
+on the right side of <code class="inline">in</code>, we passed the query itself.</p>
+<p>Any value can be used on the right-side of <code class="inline">in</code> as long as it implements
+the <a href="Ecto.Queryable.html"><code class="inline">Ecto.Queryable</code></a> protocol. For now, we know the protocol is
+implemented for both atoms (like <code class="inline">User</code>) and strings (like “users”).</p>
+<p>In any case, regardless if a schema has been given or not, Ecto
+queries are always composable thanks to its binding system.</p>
+<h3 id="module-query-bindings" class="section-heading">
+  <a href="#module-query-bindings" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Query bindings
+</h3>
+
+<p>On the left side of <code class="inline">in</code> we specify the query bindings.  This is
+done inside from and join clauses.  In the query below <code class="inline">u</code> is a
+binding and <code class="inline">u.age</code> is a field access using this binding.</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span></code></pre>
+<p>Bindings are not exposed from the query.  When composing queries you
+must specify bindings again for each refinement query.  For example
+to further narrow-down above query we again need to tell Ecto what
+bindings to expect:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">city</span></code></pre>
+<p>Bindings in Ecto are positional, and the names do not have to be
+consistent between input and refinement queries. For example, the
+query above could also be written as:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">q</span><span class="o">.</span><span class="n">city</span></code></pre>
+<p>It would make no difference to Ecto. This is important because
+it allows developers to compose queries without caring about
+the bindings used in the initial query.</p>
+<p>When using joins, the bindings should be matched in the order they
+are specified:</p>
+<pre><code class="nohighlight makeup"><span class="c1"># Create a query
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+          </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="w">
+
+</span><span class="c1"># Extend the query
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="p" data-group-id="2390">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="2390">]</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w">
+          </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2470">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">body</span><span class="p" data-group-id="2470">}</span></code></pre>
+<p>You are not required to specify all bindings when composing.
+For example, if we would like to order the results above by
+post insertion date, we could further extend it as:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="n">q</span><span class="o">.</span><span class="n">inserted_at</span></code></pre>
+<p>The example above will work if the input query has 1 or 10
+bindings. In the example above, we will always sort by the
+<code class="inline">inserted_at</code> column from the <code class="inline">from</code> source.</p>
+<p>Similarly, if you are interested only on the last binding
+(or the last bindings) in a query, you can use … to
+specify “all bindings before” and match on the last one.</p>
+<p>For instance, imagine you wrote:</p>
+<pre><code class="nohighlight makeup"><span class="n">posts_with_comments</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span></code></pre>
+<p>And now we want to make sure to return both the post title
+and the comment body. Although we may not know how many
+bindings there are in the query, we are sure posts is the
+first binding and comments are the last one, so we can write:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="p" data-group-id="2277">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="2277">]</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">posts_with_comments</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2355">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">body</span><span class="p" data-group-id="2355">}</span></code></pre>
+<p>In other words, <code class="inline">...</code> will include all the binding between the first and
+the last, which may be no binding at all, one or many. Using <code class="inline">...</code> can
+be handy from time to time but most of its uses can be avoided by relying
+on the keyword query syntax when writing queries.</p>
+<h3 id="module-bindingless-operations" class="section-heading">
+  <a href="#module-bindingless-operations" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Bindingless operations
+</h3>
+
+<p>Although bindings are extremely useful when working with joins,
+they are not necessary when the query has only the <code class="inline">from</code> clause.
+For such cases, Ecto supports a way for building queries
+without specifying the binding:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2248">[</span><span class="ss">category</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fresh and new&quot;</span><span class="p" data-group-id="2248">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2278">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:published_at</span><span class="p" data-group-id="2278">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2313">[</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="ss">:title</span><span class="p">,</span><span class="w"> </span><span class="ss">:body</span><span class="p" data-group-id="2313">]</span></code></pre>
+<p>The query above will select all posts with category “fresh and new”,
+order by the most recently published, and return Post structs with
+only the id, title and body fields set. It is equivalent to:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;fresh and new&quot;</span><span class="p">,</span><span class="w">
+  </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2309">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">published_at</span><span class="p" data-group-id="2309">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">struct</span><span class="p" data-group-id="2405">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2404">[</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="ss">:title</span><span class="p">,</span><span class="w"> </span><span class="ss">:body</span><span class="p" data-group-id="2404">]</span><span class="p" data-group-id="2405">)</span></code></pre>
+<p>One advantage of bindingless queries is that they are data-driven
+and therefore useful for dynamically building queries. For example,
+the query above could also be written as:</p>
+<pre><code class="nohighlight makeup"><span class="n">where</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="2243">[</span><span class="ss">category</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fresh and new&quot;</span><span class="p" data-group-id="2243">]</span><span class="w">
+</span><span class="n">order_by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="2275">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:published_at</span><span class="p" data-group-id="2275">]</span><span class="w">
+</span><span class="n">select</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="2312">[</span><span class="ss">:id</span><span class="p">,</span><span class="w"> </span><span class="ss">:title</span><span class="p">,</span><span class="w"> </span><span class="ss">:body</span><span class="p" data-group-id="2312">]</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">where</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">order_by</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">select</span></code></pre>
+<p>This feature is very useful when queries need to be built based
+on some user input, like web search forms, CLIs and so on.</p>
+<h2 id="module-fragments" class="section-heading">
+  <a href="#module-fragments" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Fragments
+</h2>
+
+<p>If you need an escape hatch, Ecto provides fragments
+(see <a href="Ecto.Query.API.html#fragment/1"><code class="inline">Ecto.Query.API.fragment/1</code></a>) to inject SQL (and non-SQL)
+fragments into queries.</p>
+<p>For example, to get all posts while running the “lower(?)”
+function in the database where <code class="inline">p.title</code> is interpolated
+in place of <code class="inline">?</code>, one can write:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">is_nil</span><span class="p" data-group-id="2274">(</span><span class="n">p</span><span class="o">.</span><span class="n">published_at</span><span class="p" data-group-id="2274">)</span><span class="w"> </span><span class="ow">and</span><span class="w">
+         </span><span class="n">fragment</span><span class="p" data-group-id="2335">(</span><span class="s2">&quot;lower(?)&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p" data-group-id="2335">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">title</span></code></pre>
+<p>Also, most adapters provide direct APIs for queries, like
+<a href="Ecto.Adapters.SQL.html#query/4"><code class="inline">Ecto.Adapters.SQL.query/4</code></a>, allowing developers to
+completely bypass Ecto queries.</p>
+<h2 id="module-macro-api" class="section-heading">
+  <a href="#module-macro-api" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Macro API
+</h2>
+
+<p>In all examples so far we have used the <strong>keywords query syntax</strong> to
+create a query:</p>
+<pre><code class="nohighlight makeup"><span class="kn">import</span><span class="w"> </span><span class="nc">Ecto.Query</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="s2">&quot;users&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span></code></pre>
+<p>Due to the prevalence of the pipe operator in Elixir, Ecto also supports
+a pipe-based syntax:</p>
+<pre><code class="nohighlight makeup"><span class="s2">&quot;users&quot;</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="2302">(</span><span class="p" data-group-id="2265">[</span><span class="n">u</span><span class="p" data-group-id="2265">]</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span><span class="p" data-group-id="2302">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="2386">(</span><span class="p" data-group-id="2358">[</span><span class="n">u</span><span class="p" data-group-id="2358">]</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="2386">)</span></code></pre>
+<p>The keyword-based and pipe-based examples are equivalent. The downside
+of using macros is that the binding must be specified for every operation.
+However, since keyword-based and pipe-based examples are equivalent, the
+bindingless syntax also works for macros:</p>
+<pre><code class="nohighlight makeup"><span class="s2">&quot;users&quot;</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="2295">(</span><span class="p" data-group-id="2258">[</span><span class="n">u</span><span class="p" data-group-id="2258">]</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">18</span><span class="p" data-group-id="2295">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="2347">(</span><span class="p" data-group-id="2346">[</span><span class="ss">:name</span><span class="p" data-group-id="2346">]</span><span class="p" data-group-id="2347">)</span></code></pre>
+<p>Such allows developers to write queries using bindings only in more
+complex query expressions.</p>
+<p>This module documents each of those macros, providing examples in
+both the keywords query and pipe expression formats.</p>
+<h2 id="module-query-prefix" class="section-heading">
+  <a href="#module-query-prefix" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Query Prefix
+</h2>
+
+<p>It is possible to set a prefix for the queries. For Postgres users,
+this will specify the schema where the table is located, while for
+MySQL users this will specify the database where the table is
+located.  When no prefix is set, Postgres queries are assumed to be
+in the public schema, while MySQL queries are assumed to be in the
+database set in the config for the repo.</p>
+<p>To set the prefix on a query:</p>
+<pre><code class="nohighlight makeup"><span class="n">results</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="n">query</span><span class="w"> </span><span class="c1"># May be User or an Ecto.Query itself
+</span><span class="w">  </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Ecto.Queryable</span><span class="o">.</span><span class="n">to_query</span><span class="w">
+  </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Map</span><span class="o">.</span><span class="n">put</span><span class="p" data-group-id="2343">(</span><span class="ss">:prefix</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p" data-group-id="2343">)</span><span class="w">
+  </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span></code></pre>
+<p>When a prefix is set in a query, all loaded structs will belong to that
+prefix, so operations like update and delete will be applied to the
+proper prefix. In case you want to manually set the prefix for new data,
+specially on insert, use <a href="Ecto.html#put_meta/2"><code class="inline">Ecto.put_meta/2</code></a>.</p>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Summary
+          </h1>
+          
+  <div class="summary-types summary">
+    <h2>
+      <a href="#types">Types</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:t/0">t()</a>
+  </div>
+  
+</div>
+
+  </div>
+
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#distinct/3">distinct(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A distinct query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#dynamic/2">dynamic(binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Builds a dynamic query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#exclude/2">exclude(query, field)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Resets a previously set field on a query</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#first/2">first(queryable, order_by \\ nil)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Restricts the query to return the first result ordered by primary key</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#from/2">from(expr, kw \\ [])</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Creates a query</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#group_by/3">group_by(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A group by query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#having/3">having(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An AND having query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#join/5">join(query, qual, binding \\ [], expr, on \\ nil)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A join query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#last/2">last(queryable, order_by \\ nil)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Restricts the query to return the last result ordered by primary key</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#limit/3">limit(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A limit query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#lock/2">lock(query, expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A lock query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#offset/3">offset(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An offset query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#or_having/3">or_having(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An OR having query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#or_where/3">or_where(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An OR where query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#order_by/3">order_by(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An order by query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#preload/3">preload(query, bindings \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Preloads the associations into the given struct</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#select/3">select(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>A select query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#select_merge/3">select_merge(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Mergeable select query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#subquery/2">subquery(query, opts \\ [])</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Converts a query into a subquery</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#update/3">update(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An update query expression</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#where/3">where(query, binding \\ [], expr)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>An AND where query expression</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+
+        </section>
+      
+
+      
+        <section id="types" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#types">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Types
+          </h1>
+          <div class="types-list">
+            <div class="detail" id="t:t/0">
+  
+  
+  <div class="detail-header">
+    <a href="#t:t/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <span class="signature">t()</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L294" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+      <div class="specs">
+        
+          <pre>t() :: %Ecto.Query{assocs: term, distinct: term, from: term, group_bys: term, havings: term, joins: term, limit: term, lock: term, offset: term, order_bys: term, prefix: term, preloads: term, select: term, sources: term, updates: term, wheres: term}</pre>
+        
+      </div>
+    
+  </div>
+  <section class="docstring">
+    
+  </section>
+</div>
+
+          </div>
+        </section>
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="distinct/3">
+  
+  
+    <span id="distinct/2"></span>
+  
+  <div class="detail-header">
+    <a href="#distinct/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">distinct(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L857" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A distinct query expression.</p>
+<p>When true, only keeps distinct values from the resulting
+select expression.</p>
+<p>If supported by your database, you can also pass query expressions
+to distinct and it will generate a query with DISTINCT ON. In such
+cases, <code class="inline">distinct</code> accepts exactly the same expressions as <code class="inline">order_by</code>
+and any <code class="inline">distinct</code> expression will be automatically prepended to the
+<code class="inline">order_by</code> expressions in case there is any <code class="inline">order_by</code> expression.</p>
+<h2 id="distinct/3-keywords-examples" class="section-heading">
+  <a href="#distinct/3-keywords-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Returns the list of different categories in the Post schema
+</span><span class="n">from</span><span class="p" data-group-id="2604">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">distinct</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p" data-group-id="2604">)</span><span class="w">
+
+</span><span class="c1"># If your database supports DISTINCT ON(),
+# you can pass expressions to distinct too
+</span><span class="n">from</span><span class="p" data-group-id="2618">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+   </span><span class="ss">distinct</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w">
+   </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2617">[</span><span class="n">p</span><span class="o">.</span><span class="n">date</span><span class="p" data-group-id="2617">]</span><span class="p" data-group-id="2618">)</span><span class="w">
+
+</span><span class="c1"># The DISTINCT ON() also supports ordering similar to ORDER BY.
+</span><span class="n">from</span><span class="p" data-group-id="2651">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+   </span><span class="ss">distinct</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2638">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p" data-group-id="2638">]</span><span class="p">,</span><span class="w">
+   </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2650">[</span><span class="n">p</span><span class="o">.</span><span class="n">date</span><span class="p" data-group-id="2650">]</span><span class="p" data-group-id="2651">)</span><span class="w">
+
+</span><span class="c1"># Using atoms
+</span><span class="n">from</span><span class="p" data-group-id="2670">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">distinct</span><span class="p">:</span><span class="w"> </span><span class="ss">:category</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="ss">:date</span><span class="p" data-group-id="2670">)</span></code></pre>
+<h2 id="distinct/3-expressions-example" class="section-heading">
+  <a href="#distinct/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">distinct</span><span class="p" data-group-id="2591">(</span><span class="no">true</span><span class="p" data-group-id="2591">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">order_by</span><span class="p" data-group-id="2607">(</span><span class="p" data-group-id="2601">[</span><span class="n">p</span><span class="p" data-group-id="2601">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2606">[</span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">author</span><span class="p" data-group-id="2606">]</span><span class="p" data-group-id="2607">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="dynamic/2">
+  
+  
+    <span id="dynamic/1"></span>
+  
+  <div class="detail-header">
+    <a href="#dynamic/2" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">dynamic(binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L392" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Builds a dynamic query expression.</p>
+<p>Dynamic query expressions allows developers to build queries
+expression bit by bit so they are later interpolated in a query.</p>
+<h2 id="dynamic/2-examples" class="section-heading">
+  <a href="#dynamic/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<p>For example, imagine you have a set of conditions you want to
+build your query on:</p>
+<pre><code class="nohighlight makeup"><span class="n">dynamic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="w">
+
+</span><span class="n">dynamic</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="n">params</span><span class="p" data-group-id="2698">[</span><span class="s2">&quot;is_public&quot;</span><span class="p" data-group-id="2698">]</span><span class="w"> </span><span class="k" data-group-id="2724">do</span><span class="w">
+    </span><span class="n">dynamic</span><span class="p" data-group-id="2715">(</span><span class="p" data-group-id="2702">[</span><span class="n">p</span><span class="p" data-group-id="2702">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">is_public</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span><span class="p" data-group-id="2715">)</span><span class="w">
+  </span><span class="k" data-group-id="2724">else</span><span class="w">
+    </span><span class="n">dynamic</span><span class="w">
+  </span><span class="k" data-group-id="2724">end</span><span class="w">
+
+</span><span class="n">dynamic</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="n">params</span><span class="p" data-group-id="2737">[</span><span class="s2">&quot;allow_reviewers&quot;</span><span class="p" data-group-id="2737">]</span><span class="w"> </span><span class="k" data-group-id="2766">do</span><span class="w">
+    </span><span class="n">dynamic</span><span class="p" data-group-id="2759">(</span><span class="p" data-group-id="2748">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p" data-group-id="2748">]</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="o">.</span><span class="n">reviewer</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="no">true</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span><span class="p" data-group-id="2759">)</span><span class="w">
+  </span><span class="k" data-group-id="2766">else</span><span class="w">
+    </span><span class="n">dynamic</span><span class="w">
+  </span><span class="k" data-group-id="2766">end</span><span class="w">
+
+</span><span class="n">from</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span></code></pre>
+<p>In the example above, we were able to build the query expressions
+bit by bit, using different bindings, and later interpolate it all
+at once inside the query.</p>
+<p>A dynamic expression can always be interpolated inside another dynamic
+expression and into the constructs described below.</p>
+<h2 id="dynamic/2-where-having-and-a-join-s-on" class="section-heading">
+  <a href="#dynamic/2-where-having-and-a-join-s-on" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  <code class="inline">where</code>, <code class="inline">having</code> and a <code class="inline">join</code>’s `on’
+</h2>
+
+<p><code class="inline">dynamic</code> can be interpolated at the root of a <code class="inline">where</code>, <code class="inline">having</code> or
+a <code class="inline">join</code>’s <code class="inline">on</code>.</p>
+<p>For example, the following is forbidden because it is not at the
+root of a <code class="inline">where</code>:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">q</span><span class="o">.</span><span class="n">some_condition</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span></code></pre>
+<p>Fortunately that’s easily solvable by simply rewriting it to:</p>
+<pre><code class="nohighlight makeup"><span class="n">dynamic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dynamic</span><span class="p" data-group-id="2703">(</span><span class="p" data-group-id="2696">[</span><span class="n">q</span><span class="p" data-group-id="2696">]</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="o">.</span><span class="n">some_condition</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span><span class="p" data-group-id="2703">)</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">dynamic</span></code></pre>
+<h2 id="dynamic/2-updates" class="section-heading">
+  <a href="#dynamic/2-updates" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Updates
+</h2>
+
+<p>Dynamic is also supported as each field in an update, for example:</p>
+<pre><code class="nohighlight makeup"><span class="n">update_to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dynamic</span><span class="p" data-group-id="2701">(</span><span class="p" data-group-id="2695">[</span><span class="n">p</span><span class="p" data-group-id="2695">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">count</span><span class="p" data-group-id="2701">)</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">update</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2722">[</span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2721">[</span><span class="ss">average</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">update_to</span><span class="p" data-group-id="2721">]</span><span class="p" data-group-id="2722">]</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="exclude/2">
+  
+  
+  <div class="detail-header">
+    <a href="#exclude/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">exclude(query, field)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L469" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Resets a previously set field on a query.</p>
+<p>It can reset any query field except the query source (<code class="inline">from</code>).</p>
+<h2 id="exclude/2-example" class="section-heading">
+  <a href="#exclude/2-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Ecto.Query</span><span class="o">.</span><span class="n">exclude</span><span class="p" data-group-id="2803">(</span><span class="ss">:select</span><span class="p" data-group-id="2803">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="first/2">
+  
+  
+    <span id="first/1"></span>
+  
+  <div class="detail-header">
+    <a href="#first/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">first(queryable, order_by \\ nil)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1298" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Restricts the query to return the first result ordered by primary key.</p>
+<p>The query will be automatically ordered by the primary key
+unless <code class="inline">order_by</code> is given or <code class="inline">order_by</code> is set in the query.
+Limit is always set to 1.</p>
+<h2 id="first/2-examples" class="section-heading">
+  <a href="#first/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">first</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Repo</span><span class="o">.</span><span class="n">one</span><span class="w">
+</span><span class="n">query</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">first</span><span class="p" data-group-id="2819">(</span><span class="ss">:inserted_at</span><span class="p" data-group-id="2819">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Repo</span><span class="o">.</span><span class="n">one</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="from/2">
+  
+  
+    <span id="from/1"></span>
+  
+  <div class="detail-header">
+    <a href="#from/2" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">from(expr, kw \\ [])</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L538" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Creates a query.</p>
+<p>It can either be a keyword query or a query expression.</p>
+<p>If it is a keyword query the first argument must be
+either an <code class="inline">in</code> expression, or a value that implements
+the <a href="Ecto.Queryable.html"><code class="inline">Ecto.Queryable</code></a> protocol. If the query needs a
+reference to the data source in any other part of the
+expression, then an <code class="inline">in</code> must be used to create a reference
+variable. The second argument should be a keyword query
+where the keys are expression types and the values are
+expressions.</p>
+<p>If it is a query expression the first argument must be
+a value that implements the <a href="Ecto.Queryable.html"><code class="inline">Ecto.Queryable</code></a> protocol
+and the second argument the expression.</p>
+<h2 id="from/2-keywords-example" class="section-heading">
+  <a href="#from/2-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="2840">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="2840">)</span></code></pre>
+<h2 id="from/2-expressions-example" class="section-heading">
+  <a href="#from/2-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="2849">(</span><span class="p" data-group-id="2841">[</span><span class="n">c</span><span class="p" data-group-id="2841">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="2849">)</span></code></pre>
+<h2 id="from/2-examples" class="section-heading">
+  <a href="#from/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="kd">def</span><span class="w"> </span><span class="nf">paginate</span><span class="p" data-group-id="2842">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="n">page</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p" data-group-id="2842">)</span><span class="w"> </span><span class="k" data-group-id="2868">do</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w">
+    </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">size</span><span class="p">,</span><span class="w">
+    </span><span class="ss">offset</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="p" data-group-id="2866">(</span><span class="p" data-group-id="2864">(</span><span class="n">page</span><span class="o">-</span><span class="mi">1</span><span class="p" data-group-id="2864">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">size</span><span class="p" data-group-id="2866">)</span><span class="w">
+</span><span class="k" data-group-id="2868">end</span></code></pre>
+<p>The example above does not use <code class="inline">in</code> because <code class="inline">limit</code> and <code class="inline">offset</code>
+do not require a reference to the data source. However, extending
+the query with a where expression would require the use of <code class="inline">in</code>:</p>
+<pre><code class="nohighlight makeup"><span class="kd">def</span><span class="w"> </span><span class="nf">published</span><span class="p" data-group-id="2838">(</span><span class="n">query</span><span class="p" data-group-id="2838">)</span><span class="w"> </span><span class="k" data-group-id="2859">do</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="ow">not</span><span class="p" data-group-id="2857">(</span><span class="n">is_nil</span><span class="p" data-group-id="2856">(</span><span class="n">p</span><span class="o">.</span><span class="n">published_at</span><span class="p" data-group-id="2856">)</span><span class="p" data-group-id="2857">)</span><span class="w">
+</span><span class="k" data-group-id="2859">end</span></code></pre>
+<p>Notice we have created a <code class="inline">p</code> variable to reference the query’s
+original data source. This assumes that the original query
+only had one source. When the given query has more than one source, a variable
+must be given for each in the order they were bound:</p>
+<pre><code class="nohighlight makeup"><span class="kd">def</span><span class="w"> </span><span class="nf">published_multi</span><span class="p" data-group-id="2837">(</span><span class="n">query</span><span class="p" data-group-id="2837">)</span><span class="w"> </span><span class="k" data-group-id="2872">do</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="p" data-group-id="2846">[</span><span class="n">p</span><span class="p">,</span><span class="n">o</span><span class="p" data-group-id="2846">]</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="ow">not</span><span class="p" data-group-id="2862">(</span><span class="n">is_nil</span><span class="p" data-group-id="2861">(</span><span class="n">p</span><span class="o">.</span><span class="n">published_at</span><span class="p" data-group-id="2861">)</span><span class="p" data-group-id="2862">)</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="ow">not</span><span class="p" data-group-id="2870">(</span><span class="n">is_nil</span><span class="p" data-group-id="2869">(</span><span class="n">o</span><span class="o">.</span><span class="n">published_at</span><span class="p" data-group-id="2869">)</span><span class="p" data-group-id="2870">)</span><span class="w">
+</span><span class="k" data-group-id="2872">end</span></code></pre>
+<p>Note the variables <code class="inline">p</code> and <code class="inline">o</code> can be named whatever you like
+as they have no importance in the query sent to the database.</p>
+
+  </section>
+</div>
+<div class="detail" id="group_by/3">
+  
+  
+    <span id="group_by/2"></span>
+  
+  <div class="detail-header">
+    <a href="#group_by/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">group_by(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1126" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A group by query expression.</p>
+<p>Groups together rows from the schema that have the same values in the given
+fields. Using <code class="inline">group_by</code> “groups” the query giving it different semantics
+in the <code class="inline">select</code> expression. If a query is grouped, only fields that were
+referenced in the <code class="inline">group_by</code> can be used in the <code class="inline">select</code> or if the field
+is given as an argument to an aggregate function.</p>
+<p><code class="inline">group_by</code> also accepts a list of atoms where each atom refers to
+a field in source.</p>
+<h2 id="group_by/3-keywords-examples" class="section-heading">
+  <a href="#group_by/3-keywords-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Returns the number of posts in each category
+</span><span class="n">from</span><span class="p" data-group-id="2926">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">group_by</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2925">{</span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p" data-group-id="2924">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="2924">)</span><span class="p" data-group-id="2925">}</span><span class="p" data-group-id="2926">)</span><span class="w">
+
+</span><span class="c1"># Using atoms
+</span><span class="n">from</span><span class="p" data-group-id="2956">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">group_by</span><span class="p">:</span><span class="w"> </span><span class="ss">:category</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2955">{</span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p" data-group-id="2954">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="2954">)</span><span class="p" data-group-id="2955">}</span><span class="p" data-group-id="2956">)</span></code></pre>
+<h2 id="group_by/3-expressions-example" class="section-heading">
+  <a href="#group_by/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">group_by</span><span class="p" data-group-id="2896">(</span><span class="p" data-group-id="2886">[</span><span class="n">p</span><span class="p" data-group-id="2886">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p" data-group-id="2896">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="2923">(</span><span class="p" data-group-id="2905">[</span><span class="n">p</span><span class="p" data-group-id="2905">]</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p" data-group-id="2922">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="2922">)</span><span class="p" data-group-id="2923">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="having/3">
+  
+  
+    <span id="having/2"></span>
+  
+  <div class="detail-header">
+    <a href="#having/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">having(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1154" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An AND having query expression.</p>
+<p>Like <code class="inline">where</code>, <code class="inline">having</code> filters rows from the schema, but after the grouping is
+performed giving it the same semantics as <code class="inline">select</code> for a grouped query
+(see <a href="#group_by/3"><code class="inline">group_by/3</code></a>). <code class="inline">having</code> groups the query even if the query has no
+<code class="inline">group_by</code> expression.</p>
+<h2 id="having/3-keywords-example" class="section-heading">
+  <a href="#having/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Returns the number of posts in each category where the
+# average number of comments is above ten
+</span><span class="n">from</span><span class="p" data-group-id="3027">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">group_by</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w">
+  </span><span class="ss">having</span><span class="p">:</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3008">(</span><span class="n">p</span><span class="o">.</span><span class="n">num_comments</span><span class="p" data-group-id="3008">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3026">{</span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p" data-group-id="3025">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="3025">)</span><span class="p" data-group-id="3026">}</span><span class="p" data-group-id="3027">)</span></code></pre>
+<h2 id="having/3-expressions-example" class="section-heading">
+  <a href="#having/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">group_by</span><span class="p" data-group-id="2995">(</span><span class="p" data-group-id="2979">[</span><span class="n">p</span><span class="p" data-group-id="2979">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">category</span><span class="p" data-group-id="2995">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">having</span><span class="p" data-group-id="3012">(</span><span class="p" data-group-id="3003">[</span><span class="n">p</span><span class="p" data-group-id="3003">]</span><span class="p">,</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3011">(</span><span class="n">p</span><span class="o">.</span><span class="n">num_comments</span><span class="p" data-group-id="3011">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="3012">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3024">(</span><span class="p" data-group-id="3020">[</span><span class="n">p</span><span class="p" data-group-id="3020">]</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p" data-group-id="3023">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="3023">)</span><span class="p" data-group-id="3024">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="join/5">
+  
+  
+    <span id="join/3"></span>
+  
+    <span id="join/4"></span>
+  
+  <div class="detail-header">
+    <a href="#join/5" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">join(query, qual, binding \\ [], expr, on \\ nil)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L713" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A join query expression.</p>
+<p>Receives a source that is to be joined to the query and a condition for
+the join. The join condition can be any expression that evaluates
+to a boolean value. The join is by default an inner join, the qualifier
+can be changed by giving the atoms: <code class="inline">:inner</code>, <code class="inline">:left</code>, <code class="inline">:right</code>, <code class="inline">:cross</code>,
+<code class="inline">:full</code>, <code class="inline">:inner_lateral</code> or <code class="inline">:left_lateral</code>. For a keyword query the <code class="inline">:join</code>
+keyword can be changed to: <code class="inline">:inner_join</code>, <code class="inline">:left_join</code>, <code class="inline">:right_join</code>,
+<code class="inline">:cross_join</code>, <code class="inline">:full_join</code>, <code class="inline">:inner_lateral_join</code> or <code class="inline">:left_lateral_join</code>.</p>
+<p>Currently it is possible to join on:</p>
+<ul>
+<li>an <a href="Ecto.Schema.html"><code class="inline">Ecto.Schema</code></a>, such as <code class="inline">p in Post</code>
+</li>
+<li>an Ecto query with zero or more where clauses, such as <code class="inline">from &quot;posts&quot;, where: [public: true]</code>
+</li>
+<li>an association, such as <code class="inline">c in assoc(post, :comments)</code>
+</li>
+<li>a query fragment, such as <code class="inline">c in fragment(&quot;SOME COMPLEX QUERY&quot;)</code>
+</li>
+<li>a subquery, such as <code class="inline">c in subquery(another_query)</code>
+</li>
+</ul>
+<p>The fragment support exists mostly for handling lateral joins.
+See “Joining with fragments” below.</p>
+<h2 id="join/5-keywords-examples" class="section-heading">
+  <a href="#join/5-keywords-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w">
+  </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">on</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3113">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p" data-group-id="3113">}</span><span class="w">
+
+</span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">left_join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3130">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3130">)</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3141">{</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3141">}</span></code></pre>
+<p>Keywords can also be given or interpolated as part of <code class="inline">on</code>:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w">
+  </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">on</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3070">[</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="p" data-group-id="3070">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3108">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p" data-group-id="3108">}</span></code></pre>
+<p>Any key in <code class="inline">on</code> will apply to the currently joined expression.</p>
+<p>It is also possible to interpolate an Ecto query on the right side
+of <code class="inline">in</code>. For example, the query above can also be written as:</p>
+<pre><code class="nohighlight makeup"><span class="n">posts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Post</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w">
+  </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">^</span><span class="n">posts</span><span class="p">,</span><span class="w"> </span><span class="ss">on</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3078">[</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="p" data-group-id="3078">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3115">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p" data-group-id="3115">}</span></code></pre>
+<p>The above is specially useful to dynamically join on existing
+queries, for example, choosing between public posts or posts
+that have been recently published:</p>
+<pre><code class="nohighlight makeup"><span class="n">posts</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="n">params</span><span class="p" data-group-id="3061">[</span><span class="s2">&quot;drafts&quot;</span><span class="p" data-group-id="3061">]</span><span class="w"> </span><span class="k" data-group-id="3112">do</span><span class="w">
+    </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3071">[</span><span class="ss">drafts</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="3071">]</span><span class="w">
+  </span><span class="k" data-group-id="3112">else</span><span class="w">
+    </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3103">[</span><span class="ss">public</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="3103">]</span><span class="w">
+  </span><span class="k" data-group-id="3112">end</span><span class="w">
+
+</span><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w">
+  </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="o">^</span><span class="n">posts</span><span class="p">,</span><span class="w"> </span><span class="ss">on</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3138">[</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="p" data-group-id="3138">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3154">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p" data-group-id="3154">}</span></code></pre>
+<p>Only simple queries with <code class="inline">where</code> expressions can be interpolated
+in join.</p>
+<h2 id="join/5-expressions-examples" class="section-heading">
+  <a href="#join/5-expressions-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Comment</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3090">(</span><span class="ss">:inner</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3066">[</span><span class="n">c</span><span class="p" data-group-id="3066">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="3090">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3134">(</span><span class="p" data-group-id="3116">[</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p" data-group-id="3116">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3133">{</span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p" data-group-id="3133">}</span><span class="p" data-group-id="3134">)</span><span class="w">
+
+</span><span class="nc">Post</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3160">(</span><span class="ss">:left</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3148">[</span><span class="n">p</span><span class="p" data-group-id="3148">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3159">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3159">)</span><span class="p" data-group-id="3160">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3178">(</span><span class="p" data-group-id="3173">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3173">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3177">{</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3177">}</span><span class="p" data-group-id="3178">)</span><span class="w">
+
+</span><span class="nc">Post</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3202">(</span><span class="ss">:left</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3185">[</span><span class="n">p</span><span class="p" data-group-id="3185">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">post_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">is_visible</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="3202">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3216">(</span><span class="p" data-group-id="3207">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3207">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3215">{</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3215">}</span><span class="p" data-group-id="3216">)</span></code></pre>
+<h2 id="join/5-joining-with-fragments" class="section-heading">
+  <a href="#join/5-joining-with-fragments" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Joining with fragments
+</h2>
+
+<p>When you need to join on a complex query, Ecto supports fragments in joins:</p>
+<pre><code class="nohighlight makeup"><span class="nc">Comment</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3100">(</span><span class="ss">:inner</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3062">[</span><span class="n">c</span><span class="p" data-group-id="3062">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">fragment</span><span class="p" data-group-id="3099">(</span><span class="s2">&quot;SOME COMPLEX QUERY&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="o">^</span><span class="n">some_param</span><span class="p" data-group-id="3099">)</span><span class="p" data-group-id="3100">)</span></code></pre>
+<p>Although using fragments in joins is discouraged in favor of Ecto
+Query syntax, they are necessary when writing lateral joins as
+lateral joins require a subquery that refer to previous bindings:</p>
+<pre><code class="nohighlight makeup"><span class="nc">Game</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3102">(</span><span class="ss">:inner_lateral</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3063">[</span><span class="n">g</span><span class="p" data-group-id="3063">]</span><span class="p">,</span><span class="w"> </span><span class="n">gs</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">fragment</span><span class="p" data-group-id="3101">(</span><span class="s2">&quot;SELECT * FROM games_sold AS gs WHERE gs.game_id = ? ORDER BY gs.sold_on LIMIT 2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">g</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="3101">)</span><span class="p" data-group-id="3102">)</span><span class="w">
+</span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3140">(</span><span class="p" data-group-id="3122">[</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="n">gs</span><span class="p" data-group-id="3122">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3139">{</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">gs</span><span class="o">.</span><span class="n">sold_on</span><span class="p" data-group-id="3139">}</span><span class="p" data-group-id="3140">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="last/2">
+  
+  
+    <span id="last/1"></span>
+  
+  <div class="detail-header">
+    <a href="#last/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">last(queryable, order_by \\ nil)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1331" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Restricts the query to return the last result ordered by primary key.</p>
+<p>The query ordering will be automatically reversed, with ASC
+columns becoming DESC columns (and vice-versa) and limit is set
+to 1. If there is no ordering, the query will be automatically
+ordered decreasingly by primary key.</p>
+<h2 id="last/2-examples" class="section-heading">
+  <a href="#last/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">last</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Repo</span><span class="o">.</span><span class="n">one</span><span class="w">
+</span><span class="n">query</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">last</span><span class="p" data-group-id="3233">(</span><span class="ss">:inserted_at</span><span class="p" data-group-id="3233">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="nc">Repo</span><span class="o">.</span><span class="n">one</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="limit/3">
+  
+  
+    <span id="limit/2"></span>
+  
+  <div class="detail-header">
+    <a href="#limit/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">limit(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L997" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A limit query expression.</p>
+<p>Limits the number of rows returned from the result. Can be any expression but
+has to evaluate to an integer value and it can’t include any field.</p>
+<p>If <code class="inline">limit</code> is given twice, it overrides the previous value.</p>
+<h2 id="limit/3-keywords-example" class="section-heading">
+  <a href="#limit/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3261">(</span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">current_user</span><span class="p">,</span><span class="w"> </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p" data-group-id="3261">)</span></code></pre>
+<h2 id="limit/3-expressions-example" class="section-heading">
+  <a href="#limit/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">User</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="3260">(</span><span class="p" data-group-id="3252">[</span><span class="n">u</span><span class="p" data-group-id="3252">]</span><span class="p">,</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">current_user</span><span class="p" data-group-id="3260">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">limit</span><span class="p" data-group-id="3266">(</span><span class="mi">1</span><span class="p" data-group-id="3266">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="lock/2">
+  
+  
+  <div class="detail-header">
+    <a href="#lock/2" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">lock(query, expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1047" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A lock query expression.</p>
+<p>Provides support for row-level pessimistic locking using
+<code class="inline">SELECT ... FOR UPDATE</code> or other, database-specific, locking clauses.
+<code class="inline">expr</code> can be any expression but has to evaluate to a boolean value or to a
+string and it can’t include any fields.</p>
+<p>If <code class="inline">lock</code> is used more than once, the last one used takes precedence.</p>
+<p>Ecto also supports <a href="http://en.wikipedia.org/wiki/Optimistic_concurrency_control">optimistic
+locking</a> but not
+through queries. For more information on optimistic locking, have a look at
+the <a href="Ecto.Changeset.html#optimistic_lock/3"><code class="inline">Ecto.Changeset.optimistic_lock/3</code></a> function</p>
+<h2 id="lock/2-keywords-example" class="section-heading">
+  <a href="#lock/2-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3308">(</span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">u</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">current_user</span><span class="p">,</span><span class="w"> </span><span class="ss">lock</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;FOR SHARE NOWAIT&quot;</span><span class="p" data-group-id="3308">)</span></code></pre>
+<h2 id="lock/2-expressions-example" class="section-heading">
+  <a href="#lock/2-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">User</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="3300">(</span><span class="n">u</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">current_user</span><span class="p" data-group-id="3300">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p" data-group-id="3306">(</span><span class="s2">&quot;FOR SHARE NOWAIT&quot;</span><span class="p" data-group-id="3306">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="offset/3">
+  
+  
+    <span id="offset/2"></span>
+  
+  <div class="detail-header">
+    <a href="#offset/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">offset(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1019" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An offset query expression.</p>
+<p>Offsets the number of rows selected from the result. Can be any expression
+but it must evaluate to an integer value and it can’t include any field.</p>
+<p>If <code class="inline">offset</code> is given twice, it overrides the previous value.</p>
+<h2 id="offset/3-keywords-example" class="section-heading">
+  <a href="#offset/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Get all posts on page 4
+</span><span class="n">from</span><span class="p" data-group-id="3336">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="ss">offset</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p" data-group-id="3336">)</span></code></pre>
+<h2 id="offset/3-expressions-example" class="section-heading">
+  <a href="#offset/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">limit</span><span class="p" data-group-id="3330">(</span><span class="mi">10</span><span class="p" data-group-id="3330">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">offset</span><span class="p" data-group-id="3334">(</span><span class="mi">30</span><span class="p" data-group-id="3334">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="or_having/3">
+  
+  
+    <span id="or_having/2"></span>
+  
+  <div class="detail-header">
+    <a href="#or_having/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">or_having(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1176" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An OR having query expression.</p>
+<p>Like <code class="inline">having</code> but combines with the previous expression by using
+<code class="inline">OR</code>. <code class="inline">or_having</code> behaves for <code class="inline">having</code> the same way <code class="inline">or_where</code>
+behaves for <code class="inline">where</code>.</p>
+<h2 id="or_having/3-keywords-example" class="section-heading">
+  <a href="#or_having/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Augment a previous group_by with a having condition.
+</span><span class="n">from</span><span class="p" data-group-id="3363">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">or_having</span><span class="p">:</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3357">(</span><span class="n">p</span><span class="o">.</span><span class="n">num_comments</span><span class="p" data-group-id="3357">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="3363">)</span></code></pre>
+<h2 id="or_having/3-expressions-example" class="section-heading">
+  <a href="#or_having/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Augment a previous group_by with a having condition.
+</span><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">or_having</span><span class="p" data-group-id="3365">(</span><span class="p" data-group-id="3354">[</span><span class="n">p</span><span class="p" data-group-id="3354">]</span><span class="p">,</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3360">(</span><span class="n">p</span><span class="o">.</span><span class="n">num_comments</span><span class="p" data-group-id="3360">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="p" data-group-id="3365">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="or_where/3">
+  
+  
+    <span id="or_where/2"></span>
+  
+  <div class="detail-header">
+    <a href="#or_where/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">or_where(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L938" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An OR where query expression.</p>
+<p>Behaves exactly the same as <code class="inline">where</code> except it combines with any previous
+expression by using an <code class="inline">OR</code>. All expressions have to evaluate to a boolean
+value.</p>
+<p><code class="inline">or_where</code> also accepts a keyword list where each key is a field to be
+compared with the given value. Each key-value pair will be combined
+using <code class="inline">AND</code>, exactly as in <code class="inline">where</code>.</p>
+<h2 id="or_where/3-keywords-example" class="section-heading">
+  <a href="#or_where/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3388">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3378">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3378">]</span><span class="p">,</span><span class="w"> </span><span class="ss">or_where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3387">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Brazil&quot;</span><span class="p" data-group-id="3387">]</span><span class="p" data-group-id="3388">)</span></code></pre>
+<p>If interpolating keyword lists, the keyword list entries are combined
+using ANDs and joined to any existing expression with an OR:</p>
+<pre><code class="nohighlight makeup"><span class="n">filters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3379">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;New York&quot;</span><span class="p" data-group-id="3379">]</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3403">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3393">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3393">]</span><span class="p">,</span><span class="w"> </span><span class="ss">or_where</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">filters</span><span class="p" data-group-id="3403">)</span></code></pre>
+<p>is equivalent to:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3380">(</span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3380">)</span><span class="w"> </span><span class="ow">or</span><span class="w">
+                       </span><span class="p" data-group-id="3404">(</span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;New York&quot;</span><span class="p" data-group-id="3404">)</span></code></pre>
+<p>The behaviour above is by design to keep the changes between <code class="inline">where</code>
+and <code class="inline">or_where</code> minimal. Plus, if you have a keyword list and you
+would like each pair to be combined using <code class="inline">or</code>, it can be easily done
+with <a href="https://hexdocs.pm/elixir/Enum.html#reduce/3"><code class="inline">Enum.reduce/3</code></a>:</p>
+<pre><code class="nohighlight makeup"><span class="n">filters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3374">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">is_tax_exempt</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p" data-group-id="3374">]</span><span class="w">
+</span><span class="nc">Enum</span><span class="o">.</span><span class="n">reduce</span><span class="p" data-group-id="3413">(</span><span class="n">filters</span><span class="p">,</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="k" data-group-id="3412">fn</span><span class="w"> </span><span class="p" data-group-id="3397">{</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p" data-group-id="3397">}</span><span class="p">,</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="o">-&gt;</span><span class="w">
+  </span><span class="n">from</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">or_where</span><span class="p">:</span><span class="w"> </span><span class="n">field</span><span class="p" data-group-id="3410">(</span><span class="n">q</span><span class="p">,</span><span class="w"> </span><span class="o">^</span><span class="n">key</span><span class="p" data-group-id="3410">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">^</span><span class="n">value</span><span class="w">
+</span><span class="k" data-group-id="3412">end</span><span class="p" data-group-id="3413">)</span></code></pre>
+<p>which will be equivalent to:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">or_where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3383">(</span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span><span class="p" data-group-id="3383">)</span><span class="p">,</span><span class="w"> </span><span class="ss">or_where</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">is_tax_exempt</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="no">true</span></code></pre>
+<h2 id="or_where/3-expressions-example" class="section-heading">
+  <a href="#or_where/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="3384">(</span><span class="p" data-group-id="3371">[</span><span class="n">c</span><span class="p" data-group-id="3371">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3384">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">or_where</span><span class="p" data-group-id="3405">(</span><span class="p" data-group-id="3392">[</span><span class="n">c</span><span class="p" data-group-id="3392">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;Brazil&quot;</span><span class="p" data-group-id="3405">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="order_by/3">
+  
+  
+    <span id="order_by/2"></span>
+  
+  <div class="detail-header">
+    <a href="#order_by/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">order_by(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L976" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An order by query expression.</p>
+<p>Orders the fields based on one or more fields. It accepts a single field
+or a list of fields. The default direction is ascending (<code class="inline">:asc</code>) and can be
+customized in a keyword list as shown in the examples.</p>
+<p>There can be several order by expressions in a query and new expressions
+are always appended to the previous ones.</p>
+<p><code class="inline">order_by</code> also accepts a list of atoms where each atom refers to a field in
+source or a keyword list where the direction is given as key and the field
+to order as value.</p>
+<h2 id="order_by/3-keywords-examples" class="section-heading">
+  <a href="#order_by/3-keywords-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3431">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">population</span><span class="p" data-group-id="3431">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3443">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3442">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">population</span><span class="p" data-group-id="3442">]</span><span class="p" data-group-id="3443">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3450">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3449">[</span><span class="ss">asc</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">population</span><span class="p" data-group-id="3449">]</span><span class="p" data-group-id="3450">)</span><span class="w">
+
+</span><span class="n">from</span><span class="p" data-group-id="3453">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3452">[</span><span class="ss">:name</span><span class="p">,</span><span class="w"> </span><span class="ss">:population</span><span class="p" data-group-id="3452">]</span><span class="p" data-group-id="3453">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3461">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3460">[</span><span class="ss">asc</span><span class="p">:</span><span class="w"> </span><span class="ss">:name</span><span class="p">,</span><span class="w"> </span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:population</span><span class="p" data-group-id="3460">]</span><span class="p" data-group-id="3461">)</span></code></pre>
+<p>A keyword list can also be interpolated:</p>
+<pre><code class="nohighlight makeup"><span class="n">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3425">[</span><span class="ss">asc</span><span class="p">:</span><span class="w"> </span><span class="ss">:name</span><span class="p">,</span><span class="w"> </span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:population</span><span class="p" data-group-id="3425">]</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3432">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">values</span><span class="p" data-group-id="3432">)</span></code></pre>
+<h2 id="order_by/3-expressions-example" class="section-heading">
+  <a href="#order_by/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">order_by</span><span class="p" data-group-id="3433">(</span><span class="p" data-group-id="3426">[</span><span class="n">c</span><span class="p" data-group-id="3426">]</span><span class="p">,</span><span class="w"> </span><span class="ss">asc</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">population</span><span class="p" data-group-id="3433">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">order_by</span><span class="p" data-group-id="3436">(</span><span class="ss">asc</span><span class="p">:</span><span class="w"> </span><span class="ss">:name</span><span class="p" data-group-id="3436">)</span><span class="w"> </span><span class="c1"># Sorts by the cities name</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="preload/3">
+  
+  
+    <span id="preload/2"></span>
+  
+  <div class="detail-header">
+    <a href="#preload/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">preload(query, bindings \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1270" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Preloads the associations into the given struct.</p>
+<p>Preloading allows developers to specify associations that are preloaded
+into the struct. Consider this example:</p>
+<pre><code class="nohighlight makeup"><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3478">[</span><span class="ss">:comments</span><span class="p" data-group-id="3478">]</span></code></pre>
+<p>The example above will fetch all posts from the database and then do
+a separate query returning all comments associated with the given posts.</p>
+<p>However, often times, you want posts and comments to be selected and
+filtered in the same query. For such cases, you can explicitly tell
+the association to be preloaded into the struct:</p>
+<pre><code class="nohighlight makeup"><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+           </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3484">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3484">)</span><span class="p">,</span><span class="w">
+           </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">published_at</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">updated_at</span><span class="p">,</span><span class="w">
+           </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3501">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3501">]</span></code></pre>
+<p>In the example above, instead of issuing a separate query to fetch
+comments, Ecto will fetch posts and comments in a single query.</p>
+<p>Nested associations can also be preloaded in both formats:</p>
+<pre><code class="nohighlight makeup"><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+           </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3480">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="ss">:likes</span><span class="p" data-group-id="3480">]</span><span class="w">
+
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+           </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3496">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3496">)</span><span class="p">,</span><span class="w">
+           </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3504">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="ss">:likes</span><span class="p" data-group-id="3504">)</span><span class="p">,</span><span class="w">
+           </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">l</span><span class="o">.</span><span class="n">inserted_at</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">updated_at</span><span class="p">,</span><span class="w">
+           </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3525">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3524">{</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="ss">likes</span><span class="p">:</span><span class="w"> </span><span class="n">l</span><span class="p" data-group-id="3524">}</span><span class="p" data-group-id="3525">]</span></code></pre>
+<p>Keep in mind neither format can be nested arbitrarily. For
+example, the query below is invalid because we cannot preload
+likes with the join association <code class="inline">c</code>.</p>
+<pre><code class="nohighlight makeup"><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+           </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3485">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3485">)</span><span class="p">,</span><span class="w">
+           </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3492">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3491">{</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="ss">:likes</span><span class="p" data-group-id="3491">}</span><span class="p" data-group-id="3492">]</span></code></pre>
+<h2 id="preload/3-preload-queries" class="section-heading">
+  <a href="#preload/3-preload-queries" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Preload queries
+</h2>
+
+<p>Preload also allows queries to be given, allowing you to filter or
+customize how the preloads are fetched:</p>
+<pre><code class="nohighlight makeup"><span class="n">comments_query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">published_at</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3494">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">comments_query</span><span class="p" data-group-id="3494">]</span></code></pre>
+<p>The example above will issue two queries, one for loading posts and
+then another for loading the comments associated with the posts.
+Comments will be ordered by <code class="inline">published_at</code>.</p>
+<p>Note: keep in mind operations like limit and offset in the preload
+query will affect the whole result set and not each association. For
+example, the query below:</p>
+<pre><code class="nohighlight makeup"><span class="n">comments_query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Comment</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">popularity</span><span class="p">,</span><span class="w"> </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3498">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">comments_query</span><span class="p" data-group-id="3498">]</span></code></pre>
+<p>won’t bring the top of comments per post. Rather, it will only bring
+the 5 top comments across all posts.</p>
+<h2 id="preload/3-preload-functions" class="section-heading">
+  <a href="#preload/3-preload-functions" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Preload functions
+</h2>
+
+<p>Preload also allows functions to be given. In such cases, the function
+receives the IDs to be fetched and it must return the associated data.
+This data will then be mapped and sorted:</p>
+<pre><code class="nohighlight makeup"><span class="n">comment_preloader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k" data-group-id="3477">fn</span><span class="w"> </span><span class="n">post_ids</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">fetch_comments_by_post_ids</span><span class="p" data-group-id="3476">(</span><span class="n">post_ids</span><span class="p" data-group-id="3476">)</span><span class="w"> </span><span class="k" data-group-id="3477">end</span><span class="w">
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">all</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3493">[</span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">comment_preloader</span><span class="p" data-group-id="3493">]</span></code></pre>
+<p>This is useful when the whole dataset was already loaded or must be
+explicitly fetched from elsewhere.</p>
+<h2 id="preload/3-keywords-example" class="section-heading">
+  <a href="#preload/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Returns all posts, their associated comments, and the associated
+# likes for those comments.
+</span><span class="n">from</span><span class="p" data-group-id="3488">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">preload</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3486">[</span><span class="ss">:comments</span><span class="p">,</span><span class="w"> </span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="ss">:likes</span><span class="p" data-group-id="3486">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="p" data-group-id="3488">)</span></code></pre>
+<h2 id="preload/3-expressions-examples" class="section-heading">
+  <a href="#preload/3-expressions-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">preload</span><span class="p" data-group-id="3472">(</span><span class="ss">:comments</span><span class="p" data-group-id="3472">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3483">(</span><span class="p" data-group-id="3479">[</span><span class="n">p</span><span class="p" data-group-id="3479">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p" data-group-id="3483">)</span><span class="w">
+</span><span class="nc">Post</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">join</span><span class="p" data-group-id="3500">(</span><span class="ss">:left</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3490">[</span><span class="n">p</span><span class="p" data-group-id="3490">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">assoc</span><span class="p" data-group-id="3499">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="ss">:comments</span><span class="p" data-group-id="3499">)</span><span class="p" data-group-id="3500">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">preload</span><span class="p" data-group-id="3514">(</span><span class="p" data-group-id="3507">[</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3507">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3513">[</span><span class="ss">:user</span><span class="p">,</span><span class="w"> </span><span class="ss">comments</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3513">]</span><span class="p" data-group-id="3514">)</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3521">(</span><span class="p" data-group-id="3518">[</span><span class="n">p</span><span class="p" data-group-id="3518">]</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p" data-group-id="3521">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="select/3">
+  
+  
+    <span id="select/2"></span>
+  
+  <div class="detail-header">
+    <a href="#select/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">select(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L774" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>A select query expression.</p>
+<p>Selects which fields will be selected from the schema and any transformations
+that should be performed on the fields. Any expression that is accepted in a
+query can be a select field.</p>
+<p>Select also allows each expression to be wrapped in lists, tuples or maps as
+shown in the examples below. A full schema can also be selected.</p>
+<p>There can only be one select expression in a query, if the select expression
+is omitted, the query will by default select the full schema. If select is
+given more than once, an error is raised. Use <a href="#exclude/2"><code class="inline">exclude/2</code></a> if you would like
+to remove a previous select for overriding or see <a href="#select_merge/3"><code class="inline">select_merge/3</code></a> for a
+limited version of <code class="inline">select</code> that is composable and can be called multiple
+times.</p>
+<p><code class="inline">select</code> also accepts a list of atoms where each atom refers to a field in
+the source to be selected.</p>
+<h2 id="select/3-keywords-examples" class="section-heading">
+  <a href="#select/3-keywords-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3535">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3535">)</span><span class="w"> </span><span class="c1"># returns the schema as a struct
+</span><span class="n">from</span><span class="p" data-group-id="3552">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3551">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">population</span><span class="p" data-group-id="3551">}</span><span class="p" data-group-id="3552">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3562">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3561">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">county</span><span class="p" data-group-id="3561">]</span><span class="p" data-group-id="3562">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3573">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3572">%{</span><span class="ss">n</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="ss">answer</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p" data-group-id="3572">}</span><span class="p" data-group-id="3573">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3580">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3579">%{</span><span class="n">c</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="ss">alternative_name</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="3579">}</span><span class="p" data-group-id="3580">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3584">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3583">%</span><span class="nc" data-group-id="3583">Data</span><span class="p" data-group-id="3583">{</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="3583">}</span><span class="p" data-group-id="3584">)</span></code></pre>
+<p>It is also possible to select a struct and limit the returned
+fields at the same time:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3538">(</span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3537">[</span><span class="ss">:name</span><span class="p" data-group-id="3537">]</span><span class="p" data-group-id="3538">)</span></code></pre>
+<p>The syntax above is equivalent to:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3543">(</span><span class="n">city</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">struct</span><span class="p" data-group-id="3542">(</span><span class="n">city</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3541">[</span><span class="ss">:name</span><span class="p" data-group-id="3541">]</span><span class="p" data-group-id="3542">)</span><span class="p" data-group-id="3543">)</span></code></pre>
+<p>You can also write:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3546">(</span><span class="n">city</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">map</span><span class="p" data-group-id="3545">(</span><span class="n">city</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3544">[</span><span class="ss">:name</span><span class="p" data-group-id="3544">]</span><span class="p" data-group-id="3545">)</span><span class="p" data-group-id="3546">)</span></code></pre>
+<p>If you want a map with only the selected fields to be returned.
+For more information, read the docs for <a href="Ecto.Query.API.html#struct/2"><code class="inline">Ecto.Query.API.struct/2</code></a>
+and <a href="Ecto.Query.API.html#map/2"><code class="inline">Ecto.Query.API.map/2</code></a>.</p>
+<h2 id="select/3-expressions-examples" class="section-heading">
+  <a href="#select/3-expressions-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3540">(</span><span class="p" data-group-id="3536">[</span><span class="n">c</span><span class="p" data-group-id="3536">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p" data-group-id="3540">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3554">(</span><span class="p" data-group-id="3549">[</span><span class="n">c</span><span class="p" data-group-id="3549">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3553">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="p" data-group-id="3553">}</span><span class="p" data-group-id="3554">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3568">(</span><span class="p" data-group-id="3560">[</span><span class="n">c</span><span class="p" data-group-id="3560">]</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3567">%{</span><span class="s2">&quot;name&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p" data-group-id="3567">}</span><span class="p" data-group-id="3568">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3571">(</span><span class="p" data-group-id="3570">[</span><span class="ss">:name</span><span class="p" data-group-id="3570">]</span><span class="p" data-group-id="3571">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3578">(</span><span class="p" data-group-id="3574">[</span><span class="n">c</span><span class="p" data-group-id="3574">]</span><span class="p">,</span><span class="w"> </span><span class="n">struct</span><span class="p" data-group-id="3577">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3576">[</span><span class="ss">:name</span><span class="p" data-group-id="3576">]</span><span class="p" data-group-id="3577">)</span><span class="p" data-group-id="3578">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">select</span><span class="p" data-group-id="3587">(</span><span class="p" data-group-id="3581">[</span><span class="n">c</span><span class="p" data-group-id="3581">]</span><span class="p">,</span><span class="w"> </span><span class="n">map</span><span class="p" data-group-id="3586">(</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3585">[</span><span class="ss">:name</span><span class="p" data-group-id="3585">]</span><span class="p" data-group-id="3586">)</span><span class="p" data-group-id="3587">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="select_merge/3">
+  
+  
+    <span id="select_merge/2"></span>
+  
+  <div class="detail-header">
+    <a href="#select_merge/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">select_merge(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L815" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Mergeable select query expression.</p>
+<p>This macro is similar to <a href="#select/3"><code class="inline">select/3</code></a> except it may be specified
+multiple times as long as every entry is a map. This is useful
+for merging and composing selects. For example:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3594">%{}</span><span class="w">
+
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="n">include_title?</span><span class="w"> </span><span class="k" data-group-id="3603">do</span><span class="w">
+    </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">select_merge</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3601">%{</span><span class="ss">title</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p" data-group-id="3601">}</span><span class="w">
+  </span><span class="k" data-group-id="3603">else</span><span class="w">
+    </span><span class="n">query</span><span class="w">
+  </span><span class="k" data-group-id="3603">end</span><span class="w">
+
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w">
+  </span><span class="k">if</span><span class="w"> </span><span class="n">include_visits?</span><span class="w"> </span><span class="k" data-group-id="3606">do</span><span class="w">
+    </span><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">select_merge</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3605">%{</span><span class="ss">visits</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">visits</span><span class="p" data-group-id="3605">}</span><span class="w">
+  </span><span class="k" data-group-id="3606">else</span><span class="w">
+    </span><span class="n">query</span><span class="w">
+  </span><span class="k" data-group-id="3606">end</span></code></pre>
+<p>In the example above, the query is built little by little by merging
+into a final map. If both conditions above are true, the final query
+would be equivalent to:</p>
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3598">%{</span><span class="ss">title</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="ss">visits</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">visits</span><span class="p" data-group-id="3598">}</span></code></pre>
+<p>If <code class="inline">:select_merge</code> is called and there is no value selected previously,
+it will default to the source, <code class="inline">p</code> in the example above.</p>
+<p>The left-side of a merge can be a struct or a map. The right side
+must always be a map. If the left-side is a struct, the fields on
+the right side must be part of the struct, otherwise an error is
+raised.</p>
+
+  </section>
+</div>
+<div class="detail" id="subquery/2">
+  
+  
+    <span id="subquery/1"></span>
+  
+  <div class="detail-header">
+    <a href="#subquery/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">subquery(query, opts \\ [])</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L446" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Converts a query into a subquery.</p>
+<p>If a subquery is given, returns the subquery itself.
+If any other value is given, it is converted to a query via
+<a href="Ecto.Queryable.html"><code class="inline">Ecto.Queryable</code></a> and wrapped in the <a href="Ecto.SubQuery.html"><code class="inline">Ecto.SubQuery</code></a> struct.</p>
+<p>Subqueries are currently only supported in the <code class="inline">from</code>
+and <code class="inline">join</code> fields.</p>
+<h2 id="subquery/2-examples" class="section-heading">
+  <a href="#subquery/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="c1"># Get the average salary of the top 10 highest salaries
+</span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="nc">Employee</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3617">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:salary</span><span class="p" data-group-id="3617">]</span><span class="p">,</span><span class="w"> </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">subquery</span><span class="p" data-group-id="3619">(</span><span class="n">query</span><span class="p" data-group-id="3619">)</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3630">(</span><span class="n">e</span><span class="o">.</span><span class="n">salary</span><span class="p" data-group-id="3630">)</span></code></pre>
+<p>A prefix can be specified for a subquery, similar to standard repo operations:</p>
+<pre><code class="nohighlight makeup"><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="nc">Employee</span><span class="p">,</span><span class="w"> </span><span class="ss">order_by</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3615">[</span><span class="ss">desc</span><span class="p">:</span><span class="w"> </span><span class="ss">:salary</span><span class="p" data-group-id="3615">]</span><span class="p">,</span><span class="w"> </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="w">
+</span><span class="n">from</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">subquery</span><span class="p" data-group-id="3625">(</span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="ss">prefix</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_prefix&quot;</span><span class="p" data-group-id="3625">)</span><span class="p">,</span><span class="w"> </span><span class="ss">select</span><span class="p">:</span><span class="w"> </span><span class="n">avg</span><span class="p" data-group-id="3631">(</span><span class="n">e</span><span class="o">.</span><span class="n">salary</span><span class="p" data-group-id="3631">)</span></code></pre>
+<p>Although subqueries are not allowed in WHERE expressions,
+most subqueries in WHERE expression can be rewritten as JOINs.
+Imagine you want to write this query:</p>
+<pre><code class="nohighlight makeup"><span class="nc">UPDATE</span><span class="w"> </span><span class="n">posts</span><span class="w">
+  </span><span class="nc">SET</span><span class="w"> </span><span class="n">sync_started_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="w">
+  </span><span class="nc">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="nc">IN</span><span class="w"> </span><span class="p" data-group-id="3637">(</span><span class="w">
+    </span><span class="nc">SELECT</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="nc">FROM</span><span class="w"> </span><span class="n">posts</span><span class="w">
+      </span><span class="nc">WHERE</span><span class="w"> </span><span class="n">synced</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="w"> </span><span class="nc">AND</span><span class="w"> </span><span class="p" data-group-id="3635">(</span><span class="n">sync_started_at</span><span class="w"> </span><span class="nc">IS</span><span class="w"> </span><span class="nc">NULL</span><span class="w"> </span><span class="nc">OR</span><span class="w"> </span><span class="n">sync_started_at</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p" data-group-id="3635">)</span><span class="w">
+      </span><span class="nc">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="w">
+  </span><span class="p" data-group-id="3637">)</span></code></pre>
+<p>If you attempt to write it as <code class="inline">where: p.id in ^subquery(foo)</code>,
+Ecto won’t accept such query. However, the subquery above can be
+written as a JOIN, which is supported by Ecto. The final Ecto
+query will look like this:</p>
+<pre><code class="nohighlight makeup"><span class="n">subset_query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">from</span><span class="p" data-group-id="3634">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w">
+  </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">synced</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="no">false</span><span class="w"> </span><span class="ow">and</span><span class="w">
+           </span><span class="p" data-group-id="3632">(</span><span class="n">is_nil</span><span class="p" data-group-id="3624">(</span><span class="n">p</span><span class="o">.</span><span class="n">sync_started_at</span><span class="p" data-group-id="3624">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">sync_started_at</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="o">^</span><span class="n">min_sync_started_at</span><span class="p" data-group-id="3632">)</span><span class="p">,</span><span class="w">
+  </span><span class="ss">limit</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">batch_size</span><span class="w">
+</span><span class="p" data-group-id="3634">)</span><span class="w">
+
+</span><span class="nc">Repo</span><span class="o">.</span><span class="n">update_all</span><span class="p" data-group-id="3648">(</span><span class="w">
+  </span><span class="n">from</span><span class="p" data-group-id="3642">(</span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">Post</span><span class="p">,</span><span class="w"> </span><span class="ss">join</span><span class="p">:</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">subquery</span><span class="p" data-group-id="3638">(</span><span class="n">subset_query</span><span class="p" data-group-id="3638">)</span><span class="p">,</span><span class="w"> </span><span class="ss">on</span><span class="p">:</span><span class="w"> </span><span class="n">s</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p" data-group-id="3642">)</span><span class="p">,</span><span class="w">
+  </span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3647">[</span><span class="ss">sync_started_at</span><span class="p">:</span><span class="w"> </span><span class="nc">NaiveDateTime</span><span class="o">.</span><span class="n">utc_now</span><span class="p" data-group-id="3646">()</span><span class="p" data-group-id="3647">]</span><span class="w">
+</span><span class="k">end</span><span class="p" data-group-id="3648">)</span></code></pre>
+
+  </section>
+</div>
+<div class="detail" id="update/3">
+  
+  
+    <span id="update/2"></span>
+  
+  <div class="detail-header">
+    <a href="#update/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">update(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L1095" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An update query expression.</p>
+<p>Updates are used to update the filtered entries. In order for
+updates to be applied, <a href="Ecto.Repo.html#c:update_all/3"><code class="inline">Ecto.Repo.update_all/3</code></a> must be invoked.</p>
+<h2 id="update/3-keywords-example" class="section-heading">
+  <a href="#update/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3665">(</span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">update</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3664">[</span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3663">[</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new name&quot;</span><span class="p" data-group-id="3663">]</span><span class="p" data-group-id="3664">]</span><span class="p" data-group-id="3665">)</span></code></pre>
+<h2 id="update/3-expressions-example" class="section-heading">
+  <a href="#update/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">User</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">update</span><span class="p" data-group-id="3667">(</span><span class="p" data-group-id="3655">[</span><span class="n">u</span><span class="p" data-group-id="3655">]</span><span class="p">,</span><span class="w"> </span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3666">[</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new name&quot;</span><span class="p" data-group-id="3666">]</span><span class="p" data-group-id="3667">)</span><span class="w">
+</span><span class="nc">User</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">update</span><span class="p" data-group-id="3679">(</span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3678">[</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new name&quot;</span><span class="p" data-group-id="3678">]</span><span class="p" data-group-id="3679">)</span></code></pre>
+<h2 id="update/3-interpolation" class="section-heading">
+  <a href="#update/3-interpolation" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Interpolation
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">new_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;new name&quot;</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3673">(</span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">update</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3672">[</span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3671">[</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">new_name</span><span class="p" data-group-id="3671">]</span><span class="p" data-group-id="3672">]</span><span class="p" data-group-id="3673">)</span><span class="w">
+
+</span><span class="n">new_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;new name&quot;</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3687">(</span><span class="n">u</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">User</span><span class="p">,</span><span class="w"> </span><span class="ss">update</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3686">[</span><span class="ss">set</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3685">[</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="n">fragment</span><span class="p" data-group-id="3684">(</span><span class="s2">&quot;upper(?)&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">^</span><span class="n">new_name</span><span class="p" data-group-id="3684">)</span><span class="p" data-group-id="3685">]</span><span class="p" data-group-id="3686">]</span><span class="p" data-group-id="3687">)</span></code></pre>
+<h2 id="update/3-operators" class="section-heading">
+  <a href="#update/3-operators" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Operators
+</h2>
+
+<p>The update expression in Ecto supports the following operators:</p>
+<ul>
+<li><p><code class="inline">set</code> - sets the given field in the table to the given value</p>
+<p>from(u in User, update: [set: [name: “new name”]])</p>
+</li>
+<li><p><code class="inline">inc</code> - increments (or decrements if the value is negative) the given field in the table by the given value</p>
+<p>from(u in User, update: [inc: [accesses: 1]])</p>
+</li>
+<li><p><code class="inline">push</code> - pushes (appends) the given value to the end of the array field</p>
+<p>from(u in User, update: [push: [tags: “cool”]])</p>
+</li>
+<li><p><code class="inline">pull</code> - pulls (removes) the given value from the array field</p>
+<p>from(u in User, update: [pull: [tags: “not cool”]])</p>
+</li>
+</ul>
+
+  </section>
+</div>
+<div class="detail" id="where/3">
+  
+  
+    <span id="where/2"></span>
+  
+  <div class="detail-header">
+    <a href="#where/3" class="detail-link" title="Link to this macro">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this macro</span>
+    </a>
+    <span class="signature">where(query, binding \\ [], expr)</span>
+    
+      <a href="https://github.com/elixir-ecto/ecto/blob/v3.0.0-dev/lib/ecto/query.ex#L889" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+    
+    
+      <span class="note">(macro)</span>
+    
+    
+  </div>
+  <section class="docstring">
+    <p>An AND where query expression.</p>
+<p><code class="inline">where</code> expressions are used to filter the result set. If there is more
+than one where expression, they are combined with an <code class="inline">and</code> operator. All
+where expressions have to evaluate to a boolean value.</p>
+<p><code class="inline">where</code> also accepts a keyword list where the field given as key is going to
+be compared with the given value. The fields will always refer to the source
+given in <code class="inline">from</code>.</p>
+<h2 id="where/3-keywords-example" class="section-heading">
+  <a href="#where/3-keywords-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Keywords example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="n">from</span><span class="p" data-group-id="3704">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3704">)</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3710">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="3709">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3709">]</span><span class="p" data-group-id="3710">)</span></code></pre>
+<p>It is also possible to interpolate the whole keyword list, allowing you to
+dynamically filter the source:</p>
+<pre><code class="nohighlight makeup"><span class="n">filters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3701">[</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3701">]</span><span class="w">
+</span><span class="n">from</span><span class="p" data-group-id="3705">(</span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nc">City</span><span class="p">,</span><span class="w"> </span><span class="ss">where</span><span class="p">:</span><span class="w"> </span><span class="o">^</span><span class="n">filters</span><span class="p" data-group-id="3705">)</span></code></pre>
+<h2 id="where/3-expressions-example" class="section-heading">
+  <a href="#where/3-expressions-example" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Expressions example
+</h2>
+
+<pre><code class="nohighlight makeup"><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="3706">(</span><span class="p" data-group-id="3702">[</span><span class="n">c</span><span class="p" data-group-id="3702">]</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">country</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3706">)</span><span class="w">
+</span><span class="nc">City</span><span class="w"> </span><span class="o">|&gt;</span><span class="w"> </span><span class="n">where</span><span class="p" data-group-id="3708">(</span><span class="ss">country</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sweden&quot;</span><span class="p" data-group-id="3708">)</span></code></pre>
+
+  </section>
+</div>
+
+        </section>
+      
+
+      
+          <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.17.1),
+          </span>
+          <span class="line">
+            designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+            </span>
+        </p>
+        <button class="night-mode-toggle"><span class="sr-only">Switch theme</span></button>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+  <script src="dist/app-4cfb39be16.js"></script>
+  <script src="assets/makedown.js"></script>
+  </body>
+</html>
+
